@@ -1,0 +1,13 @@
+# source reports and uploads (copyrighted, large)
+data/raw/
+uploads/
+*.pdf
+
+# environments and caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.streamlit/secrets.toml
+

@@ -1,0 +1,9 @@
+passage_id,likely_reason
+HUL_FY2025_MDA_p109_072,"Consumer-trend sentence (rising affluence, premiumisation) that the guidelines put under BRAND, but its vocabulary (FMCG sector, consumption, growth) is the same as the macro-economic passages labelled OTHER. A boundary the guidelines draw on meaning, not words."
+HUL_FY2025_MDA_p109_080,"Genuine overlap: 'influencer collaborations and social-first campaigns' are strong DIGI cues; the BRAND label rests on 'brand superiority' being the dominant purpose. A second annotator could reasonably choose DIGI."
+DABUR_FY2025_MDA_p136_083,"Reads like advertising copy (ingredient benefits of Honitus). Labelled PROD as a product description, but the persuasive wording overlaps with campaign passages labelled BRAND; the label itself is debatable."
+DABUR_FY2025_MDA_p138_112,"Acquisition/merger-integration language (synergies, post-merger) is rare among PROD training examples, so no strong PROD terms fire and the model falls back to OTHER."
+HUL_FY2026_LETTER_p10_027,"Letter style: one sentence lists many levers (propositions, markets, pricing, channels). 'Channels' and 'markets' pull toward DIST; the dominant theme (consumer segmentation) is expressed in words with few training examples."
+NESTLE_FY2026_MDA_p42_115,"Product-quality risk framed in terms of consumer trust and brand equity. The guidelines place quality under OPS, but the passage's vocabulary is mostly brand vocabulary."
+NESTLE_FY2026_LETTER_p8_040,"Anecdotal letter passage: most words describe rural sales hubs and people; the digital element (NesMitra ordering app) appears only at the end. The DIGI label is defensible but DIST is a reasonable reading too."
+HUL_FY2026_LETTER_p9_001,"Letter mixes 'responsible growth', a foundation and water access; the SUST cue (renewable energy) is diluted by generic letter vocabulary, so confidence is split and OTHER wins narrowly."

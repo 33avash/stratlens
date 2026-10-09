@@ -1,0 +1,910 @@
+{
+  "generated": "2026-10-09",
+  "label_source": "ai_drafted (Claude, build-time); human verification pending unless reports/agreement.json exists",
+  "dataset": {
+    "n_labelled": 885,
+    "n_train": 708,
+    "n_test": 177,
+    "class_counts": {
+      "PROD": 122,
+      "DIST": 70,
+      "DIGI": 65,
+      "OPS": 61,
+      "SUST": 45,
+      "BRAND": 129,
+      "OTHER": 393
+    },
+    "thin_classes": [],
+    "by_company_year": {
+      "DABUR FY2025": 199,
+      "DABUR FY2026": 233,
+      "HUL FY2025": 192,
+      "HUL FY2026": 147,
+      "NESTLE FY2026": 114
+    }
+  },
+  "model": {
+    "type": "TF-IDF (1-2 grams, sublinear tf, min_df=2) + LogisticRegression (balanced)",
+    "best_C": 30,
+    "cv_folds": 5,
+    "cv_results": [
+      {
+        "C": 0.1,
+        "cv_macro_f1": 0.7047,
+        "cv_std": 0.0537
+      },
+      {
+        "C": 0.3,
+        "cv_macro_f1": 0.7269,
+        "cv_std": 0.0629
+      },
+      {
+        "C": 1,
+        "cv_macro_f1": 0.7502,
+        "cv_std": 0.0656
+      },
+      {
+        "C": 3,
+        "cv_macro_f1": 0.7469,
+        "cv_std": 0.0487
+      },
+      {
+        "C": 10,
+        "cv_macro_f1": 0.758,
+        "cv_std": 0.0509
+      },
+      {
+        "C": 30,
+        "cv_macro_f1": 0.759,
+        "cv_std": 0.0511
+      },
+      {
+        "C": 100,
+        "cv_macro_f1": 0.749,
+        "cv_std": 0.0503
+      },
+      {
+        "C": 300,
+        "cv_macro_f1": 0.7477,
+        "cv_std": 0.0457
+      }
+    ],
+    "cv_best_macro_f1": 0.759,
+    "seed": 42
+  },
+  "threshold": {
+    "value": 0.45,
+    "default": 0.45,
+    "cv_share_flagged_at_default": 0.1893,
+    "rule": "default kept: flags a useful share of cross-validated training predictions",
+    "cv_analysis": {
+      "threshold": 0.45,
+      "share_flagged": 0.1893,
+      "n_flagged": 134,
+      "accuracy_above": 0.8641,
+      "accuracy_below": 0.4925
+    },
+    "test": {
+      "threshold": 0.45,
+      "share_flagged": 0.1525,
+      "n_flagged": 27,
+      "accuracy_above": 0.8667,
+      "accuracy_below": 0.5185
+    }
+  },
+  "test": {
+    "model": {
+      "n": 177,
+      "accuracy": 0.8136,
+      "macro_precision": 0.8169,
+      "macro_recall": 0.7475,
+      "macro_f1": 0.7765
+    },
+    "baseline": {
+      "n": 177,
+      "accuracy": 0.4859,
+      "macro_precision": 0.5161,
+      "macro_recall": 0.5832,
+      "macro_f1": 0.4892
+    },
+    "per_class": {
+      "PROD": {
+        "precision": 0.7308,
+        "recall": 0.7917,
+        "f1": 0.76,
+        "support": 24
+      },
+      "DIST": {
+        "precision": 0.75,
+        "recall": 0.6429,
+        "f1": 0.6923,
+        "support": 14
+      },
+      "DIGI": {
+        "precision": 0.8889,
+        "recall": 0.6154,
+        "f1": 0.7273,
+        "support": 13
+      },
+      "OPS": {
+        "precision": 0.8182,
+        "recall": 0.75,
+        "f1": 0.7826,
+        "support": 12
+      },
+      "SUST": {
+        "precision": 0.875,
+        "recall": 0.7778,
+        "f1": 0.8235,
+        "support": 9
+      },
+      "BRAND": {
+        "precision": 0.8261,
+        "recall": 0.7308,
+        "f1": 0.7755,
+        "support": 26
+      },
+      "OTHER": {
+        "precision": 0.8295,
+        "recall": 0.9241,
+        "f1": 0.8743,
+        "support": 79
+      }
+    },
+    "baseline_per_class": {
+      "PROD": {
+        "precision": 0.5,
+        "recall": 0.7917,
+        "f1": 0.6129,
+        "support": 24
+      },
+      "DIST": {
+        "precision": 0.3143,
+        "recall": 0.7857,
+        "f1": 0.449,
+        "support": 14
+      },
+      "DIGI": {
+        "precision": 0.3333,
+        "recall": 0.1538,
+        "f1": 0.2105,
+        "support": 13
+      },
+      "OPS": {
+        "precision": 0.3478,
+        "recall": 0.6667,
+        "f1": 0.4571,
+        "support": 12
+      },
+      "SUST": {
+        "precision": 0.7778,
+        "recall": 0.7778,
+        "f1": 0.7778,
+        "support": 9
+      },
+      "BRAND": {
+        "precision": 0.381,
+        "recall": 0.6154,
+        "f1": 0.4706,
+        "support": 26
+      },
+      "OTHER": {
+        "precision": 0.9583,
+        "recall": 0.2911,
+        "f1": 0.4466,
+        "support": 79
+      }
+    },
+    "confusion": {
+      "labels": [
+        "PROD",
+        "DIST",
+        "DIGI",
+        "OPS",
+        "SUST",
+        "BRAND",
+        "OTHER"
+      ],
+      "matrix": [
+        [
+          19,
+          0,
+          0,
+          1,
+          0,
+          2,
+          2
+        ],
+        [
+          2,
+          9,
+          0,
+          0,
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          2,
+          8,
+          0,
+          0,
+          0,
+          3
+        ],
+        [
+          0,
+          0,
+          0,
+          9,
+          0,
+          1,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          7,
+          0,
+          2
+        ],
+        [
+          1,
+          1,
+          1,
+          0,
+          0,
+          19,
+          4
+        ],
+        [
+          4,
+          0,
+          0,
+          1,
+          1,
+          0,
+          73
+        ]
+      ]
+    },
+    "most_confused": {
+      "true": "BRAND",
+      "pred": "OTHER",
+      "count": 4,
+      "true_support": 26
+    }
+  },
+  "subgroups": [
+    {
+      "dimension": "Passage length",
+      "group": "Long (>=25 words)",
+      "n": 134,
+      "accuracy": 0.7836,
+      "macro_f1": 0.7543,
+      "macro_precision": 0.7891,
+      "macro_recall": 0.7281,
+      "too_small": false
+    },
+    {
+      "dimension": "Passage length",
+      "group": "Short (<25 words)",
+      "n": 43,
+      "accuracy": 0.907,
+      "macro_f1": 0.7548,
+      "macro_precision": 0.7957,
+      "macro_recall": 0.7475,
+      "too_small": false
+    },
+    {
+      "dimension": "Writing style (section)",
+      "group": "Chairman/CEO letter",
+      "n": 46,
+      "accuracy": 0.8043,
+      "macro_f1": 0.5907,
+      "macro_precision": 0.6947,
+      "macro_recall": 0.5595,
+      "too_small": false
+    },
+    {
+      "dimension": "Writing style (section)",
+      "group": "MD&A",
+      "n": 131,
+      "accuracy": 0.8168,
+      "macro_f1": 0.7879,
+      "macro_precision": 0.8149,
+      "macro_recall": 0.7686,
+      "too_small": false
+    },
+    {
+      "dimension": "Company",
+      "group": "DABUR",
+      "n": 77,
+      "accuracy": 0.8052,
+      "macro_f1": 0.784,
+      "macro_precision": 0.8236,
+      "macro_recall": 0.8011,
+      "too_small": false
+    },
+    {
+      "dimension": "Company",
+      "group": "HUL",
+      "n": 75,
+      "accuracy": 0.8667,
+      "macro_f1": 0.8335,
+      "macro_precision": 0.8839,
+      "macro_recall": 0.8277,
+      "too_small": false
+    },
+    {
+      "dimension": "Company",
+      "group": "NESTLE",
+      "n": 25,
+      "accuracy": 0.68,
+      "macro_f1": 0.4584,
+      "macro_precision": 0.4524,
+      "macro_recall": 0.5333,
+      "too_small": true
+    }
+  ],
+  "small_n": 30,
+  "cross_year": {
+    "n": 494,
+    "accuracy": 0.749,
+    "macro_precision": 0.751,
+    "macro_recall": 0.6872,
+    "macro_f1": 0.7131,
+    "available": true,
+    "train_year": "FY2025",
+    "test_year": "FY2026",
+    "n_train": 391,
+    "companies_train": [
+      "DABUR",
+      "HUL"
+    ],
+    "companies_test": [
+      "DABUR",
+      "HUL",
+      "NESTLE"
+    ]
+  },
+  "global_terms": {
+    "BRAND": [
+      {
+        "term": "campaign",
+        "weight": 5.771
+      },
+      {
+        "term": "brand",
+        "weight": 5.097
+      },
+      {
+        "term": "consumer",
+        "weight": 2.831
+      },
+      {
+        "term": "purpose",
+        "weight": 2.785
+      },
+      {
+        "term": "feel",
+        "weight": 2.509
+      },
+      {
+        "term": "connect",
+        "weight": 2.357
+      },
+      {
+        "term": "film",
+        "weight": 2.343
+      },
+      {
+        "term": "sampling",
+        "weight": 2.285
+      },
+      {
+        "term": "featuring",
+        "weight": 2.281
+      },
+      {
+        "term": "camps",
+        "weight": 2.278
+      },
+      {
+        "term": "heart",
+        "weight": 2.158
+      },
+      {
+        "term": "presence",
+        "weight": 2.158
+      },
+      {
+        "term": "preferences",
+        "weight": 2.108
+      },
+      {
+        "term": "equity",
+        "weight": 2.098
+      },
+      {
+        "term": "reinforcing",
+        "weight": 2.086
+      }
+    ],
+    "DIGI": [
+      {
+        "term": "digital",
+        "weight": 7.158
+      },
+      {
+        "term": "ai",
+        "weight": 5.281
+      },
+      {
+        "term": "commerce",
+        "weight": 3.829
+      },
+      {
+        "term": "platforms",
+        "weight": 2.842
+      },
+      {
+        "term": "social",
+        "weight": 2.819
+      },
+      {
+        "term": "led",
+        "weight": 2.751
+      },
+      {
+        "term": "channels",
+        "weight": 2.733
+      },
+      {
+        "term": "influencer",
+        "weight": 2.548
+      },
+      {
+        "term": "digital brand",
+        "weight": 2.311
+      },
+      {
+        "term": "personalised",
+        "weight": 2.299
+      },
+      {
+        "term": "scale",
+        "weight": 2.273
+      },
+      {
+        "term": "technology",
+        "weight": 2.183
+      },
+      {
+        "term": "engagement",
+        "weight": 2.168
+      },
+      {
+        "term": "quick commerce",
+        "weight": 2.132
+      },
+      {
+        "term": "consumers",
+        "weight": 2.12
+      }
+    ],
+    "DIST": [
+      {
+        "term": "reach",
+        "weight": 5.802
+      },
+      {
+        "term": "trade",
+        "weight": 4.469
+      },
+      {
+        "term": "retail",
+        "weight": 4.017
+      },
+      {
+        "term": "market",
+        "weight": 3.77
+      },
+      {
+        "term": "distribution",
+        "weight": 3.737
+      },
+      {
+        "term": "sales",
+        "weight": 3.658
+      },
+      {
+        "term": "modern trade",
+        "weight": 3.287
+      },
+      {
+        "term": "outlets",
+        "weight": 2.743
+      },
+      {
+        "term": "store",
+        "weight": 2.672
+      },
+      {
+        "term": "channel",
+        "weight": 2.669
+      },
+      {
+        "term": "expansion",
+        "weight": 2.503
+      },
+      {
+        "term": "general trade",
+        "weight": 2.465
+      },
+      {
+        "term": "general",
+        "weight": 2.465
+      },
+      {
+        "term": "product",
+        "weight": 2.399
+      },
+      {
+        "term": "modern",
+        "weight": 2.361
+      }
+    ],
+    "OPS": [
+      {
+        "term": "cost",
+        "weight": 4.29
+      },
+      {
+        "term": "supply",
+        "weight": 3.858
+      },
+      {
+        "term": "manufacturing",
+        "weight": 3.732
+      },
+      {
+        "term": "capacity",
+        "weight": 3.679
+      },
+      {
+        "term": "supply chain",
+        "weight": 3.583
+      },
+      {
+        "term": "quality",
+        "weight": 3.359
+      },
+      {
+        "term": "chain",
+        "weight": 3.235
+      },
+      {
+        "term": "safety",
+        "weight": 2.956
+      },
+      {
+        "term": "factory",
+        "weight": 2.731
+      },
+      {
+        "term": "production",
+        "weight": 2.7
+      },
+      {
+        "term": "saving",
+        "weight": 2.676
+      },
+      {
+        "term": "procurement",
+        "weight": 2.625
+      },
+      {
+        "term": "raw",
+        "weight": 2.424
+      },
+      {
+        "term": "supplier",
+        "weight": 2.378
+      },
+      {
+        "term": "planning",
+        "weight": 2.294
+      }
+    ],
+    "OTHER": [
+      {
+        "term": "risk",
+        "weight": 3.594
+      },
+      {
+        "term": "india",
+        "weight": 3.212
+      },
+      {
+        "term": "leadership",
+        "weight": 2.531
+      },
+      {
+        "term": "business",
+        "weight": 2.206
+      },
+      {
+        "term": "2025",
+        "weight": 2.11
+      },
+      {
+        "term": "share",
+        "weight": 1.906
+      },
+      {
+        "term": "inflation",
+        "weight": 1.824
+      },
+      {
+        "term": "culture",
+        "weight": 1.803
+      },
+      {
+        "term": "volatility",
+        "weight": 1.791
+      },
+      {
+        "term": "household",
+        "weight": 1.746
+      },
+      {
+        "term": "environment",
+        "weight": 1.737
+      },
+      {
+        "term": "anchored",
+        "weight": 1.719
+      },
+      {
+        "term": "report",
+        "weight": 1.698
+      },
+      {
+        "term": "risk management",
+        "weight": 1.695
+      },
+      {
+        "term": "consumption",
+        "weight": 1.676
+      }
+    ],
+    "PROD": [
+      {
+        "term": "portfolio",
+        "weight": 5.822
+      },
+      {
+        "term": "launch",
+        "weight": 4.957
+      },
+      {
+        "term": "innovation",
+        "weight": 3.432
+      },
+      {
+        "term": "variants",
+        "weight": 3.251
+      },
+      {
+        "term": "range",
+        "weight": 3.13
+      },
+      {
+        "term": "core",
+        "weight": 2.875
+      },
+      {
+        "term": "science",
+        "weight": 2.527
+      },
+      {
+        "term": "expanding",
+        "weight": 2.418
+      },
+      {
+        "term": "cream",
+        "weight": 2.341
+      },
+      {
+        "term": "new",
+        "weight": 2.309
+      },
+      {
+        "term": "rich",
+        "weight": 2.227
+      },
+      {
+        "term": "premium",
+        "weight": 2.166
+      },
+      {
+        "term": "ice",
+        "weight": 2.09
+      },
+      {
+        "term": "ice cream",
+        "weight": 2.09
+      },
+      {
+        "term": "fluoride",
+        "weight": 2.075
+      }
+    ],
+    "SUST": [
+      {
+        "term": "sustainability",
+        "weight": 6.986
+      },
+      {
+        "term": "plastic",
+        "weight": 4.567
+      },
+      {
+        "term": "circular",
+        "weight": 3.517
+      },
+      {
+        "term": "packaging",
+        "weight": 3.489
+      },
+      {
+        "term": "responsible",
+        "weight": 3.299
+      },
+      {
+        "term": "sustainable",
+        "weight": 2.989
+      },
+      {
+        "term": "actions",
+        "weight": 2.828
+      },
+      {
+        "term": "water",
+        "weight": 2.433
+      },
+      {
+        "term": "energy",
+        "weight": 2.345
+      },
+      {
+        "term": "livelihoods",
+        "weight": 2.288
+      },
+      {
+        "term": "goals",
+        "weight": 2.228
+      },
+      {
+        "term": "esg",
+        "weight": 2.228
+      },
+      {
+        "term": "renewable",
+        "weight": 2.196
+      },
+      {
+        "term": "waste",
+        "weight": 2.132
+      },
+      {
+        "term": "bee",
+        "weight": 2.1
+      }
+    ]
+  },
+  "misclassified_examples": [
+    {
+      "passage_id": "HUL_FY2025_MDA_p109_072",
+      "company": "HUL",
+      "year": "FY2025",
+      "section": "MDA",
+      "page": 109,
+      "text": "India’s burgeoning affluent households represent a pivotal growth frontier for the FMCG sector. With higher disposable incomes, both per-capita FMCG consumption as well as premiumisation will continue to drive growth.",
+      "true": "BRAND",
+      "pred": "OTHER",
+      "confidence": 0.8646,
+      "likely_reason": "Consumer-trend sentence (rising affluence, premiumisation) that the guidelines put under BRAND, but its vocabulary (FMCG sector, consumption, growth) is the same as the macro-economic passages labelled OTHER. A boundary the guidelines draw on meaning, not words."
+    },
+    {
+      "passage_id": "HUL_FY2025_MDA_p109_080",
+      "company": "HUL",
+      "year": "FY2025",
+      "section": "MDA",
+      "page": 109,
+      "text": "Our focus on brand superiority, extensive presence in channels of the future, and innovative brand-building strategies, including influencer collaborations and social-first campaigns, are driving significant value. With WiMI 2.0, we are also accelerating our focus on key agglomerations across the country that are at the juncture of rapid premiumisation.",
+      "true": "BRAND",
+      "pred": "DIGI",
+      "confidence": 0.8388,
+      "likely_reason": "Genuine overlap: 'influencer collaborations and social-first campaigns' are strong DIGI cues; the BRAND label rests on 'brand superiority' being the dominant purpose. A second annotator could reasonably choose DIGI."
+    },
+    {
+      "passage_id": "DABUR_FY2025_MDA_p136_083",
+      "company": "DABUR",
+      "year": "FY2025",
+      "section": "MDA",
+      "page": 136,
+      "text": "Mulethi which is known for its anti-inflammatory properties helps reduce throat irritation, Tulsi has antibacterial properties that helps reduce chest congestion, and Banapsha helps clear chest blockages. Dabur Honitus, which contains these potent Ayurvedic herbs and more, helps one get effective relief from cough & throat irritation, without the use of any harmful chemicals.",
+      "true": "PROD",
+      "pred": "BRAND",
+      "confidence": 0.7346,
+      "likely_reason": "Reads like advertising copy (ingredient benefits of Honitus). Labelled PROD as a product description, but the persuasive wording overlaps with campaign passages labelled BRAND; the label itself is debatable."
+    },
+    {
+      "passage_id": "DABUR_FY2025_MDA_p138_112",
+      "company": "DABUR",
+      "year": "FY2025",
+      "section": "MDA",
+      "page": 138,
+      "text": "Sesa's range of Ayurvedic hair care products and expertise with Dabur’s extensive distribution network, category expertise, and access to key international markets, we aim to capture revenue and cost synergies and grow the brand post-merger.",
+      "true": "PROD",
+      "pred": "OTHER",
+      "confidence": 0.6931,
+      "likely_reason": "Acquisition/merger-integration language (synergies, post-merger) is rare among PROD training examples, so no strong PROD terms fire and the model falls back to OTHER."
+    },
+    {
+      "passage_id": "HUL_FY2026_LETTER_p10_027",
+      "company": "HUL",
+      "year": "FY2026",
+      "section": "LETTER",
+      "page": 10,
+      "text": "First, we deepened our consumer segmentation approach— making it central to how we design propositions, shape markets, and win across channels. This is embedded in every decision we make, whether it’s product, proposition, pricing, or the channel we use to reach and persuade",
+      "true": "BRAND",
+      "pred": "DIST",
+      "confidence": 0.6256,
+      "likely_reason": "Letter style: one sentence lists many levers (propositions, markets, pricing, channels). 'Channels' and 'markets' pull toward DIST; the dominant theme (consumer segmentation) is expressed in words with few training examples."
+    },
+    {
+      "passage_id": "NESTLE_FY2026_MDA_p42_115",
+      "company": "NESTLE",
+      "year": "FY2026",
+      "section": "MDA",
+      "page": 42,
+      "text": "Food safety and product quality are fundamental to maintaining consumer trust and protecting your Company’s reputation. In a competitive environment, any lapse may have a disproportionate impact on brand equity and consumer loyalty.",
+      "true": "OPS",
+      "pred": "BRAND",
+      "confidence": 0.6117,
+      "likely_reason": "Product-quality risk framed in terms of consumer trust and brand equity. The guidelines place quality under OPS, but the passage's vocabulary is mostly brand vocabulary."
+    },
+    {
+      "passage_id": "NESTLE_FY2026_LETTER_p8_040",
+      "company": "NESTLE",
+      "year": "FY2026",
+      "section": "LETTER",
+      "page": 8,
+      "text": "During my visit to Notun Jabari, a tiny village in Assam, with a population of around 2,000 people, I met Firubi, our first woman area sales manager in the East, and Dhrubojyoti, who runs a wholesale hub in rural Assam. Our hubs in semi-urban and rural markets use NesMitra, Nestlé’s retailer self-ordering mobile application, to place orders conveniently, streamlining our route-to-market.",
+      "true": "DIGI",
+      "pred": "DIST",
+      "confidence": 0.5348,
+      "likely_reason": "Anecdotal letter passage: most words describe rural sales hubs and people; the digital element (NesMitra ordering app) appears only at the end. The DIGI label is defensible but DIST is a reasonable reading too."
+    },
+    {
+      "passage_id": "HUL_FY2026_LETTER_p9_001",
+      "company": "HUL",
+      "year": "FY2026",
+      "section": "LETTER",
+      "page": 9,
+      "text": "We are equally committed to ensuring that our growth is responsible. We have made strong progress on climate action, with 97% of our operations powered by renewable energy. Through the Hindustan Unilever Foundation, our not-for-profit subsidiary focused on addressing India’s water challenges, we have helped create cumulative water potential of over 4.5 trillion litres.",
+      "true": "SUST",
+      "pred": "OTHER",
+      "confidence": 0.527,
+      "likely_reason": "Letter mixes 'responsible growth', a foundation and water access; the SUST cue (renewable energy) is diluted by generic letter vocabulary, so confidence is split and OTHER wins narrowly."
+    }
+  ],
+  "n_test_errors": 33,
+  "key_finding": "On 177 held-out passages the model reaches macro-F1 0.78 versus 0.49 for the keyword baseline. The largest subgroup gap is by writing style (section): macro-F1 0.59 for Chairman/CEO letter (n=46) against 0.79 for MD&A (n=131), a gap of 0.20. Groups too small to conclude: NESTLE (n=25). The most frequent error is BRAND passages predicted as OTHER (4 of 26)."
+}

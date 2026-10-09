@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap');
+
+/* ---- chrome ---- */
+#MainMenu, footer, [data-testid="stDeployButton"], [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
+header[data-testid="stHeader"] { background: transparent; height: 0; }
+
+/* ---- layout & type ---- */
+html, body, .stApp, .stMarkdown, .stDataFrame, button, input, select, textarea, label, p, li, td, th { font-family: Inter, 'Segoe UI', system-ui, sans-serif; }
+[data-testid="stIconMaterial"], .material-symbols-rounded { font-family: "Material Symbols Rounded" !important; }
+.block-container { max-width: 1200px; padding-top: 2.2rem; padding-bottom: 4rem; }
+.stMarkdown p, .stMarkdown li { font-size: 14px; line-height: 1.55; }
+h1, h2, h3, .sl-title, .sl-h2 { font-family: 'Source Serif 4', Georgia, serif !important; color: #2B2B2B; font-weight: 600; letter-spacing: -0.01em; }
+.sl-title { font-size: 28px; line-height: 1.2; margin: 0 0 4px 0; }
+.sl-sub { font-size: 14px; color: #6B6660; margin: 0 0 18px 0; max-width: 760px; }
+.sl-section { border-top: 1px solid #E6E1D8; margin-top: 36px; padding-top: 18px; }
+.sl-h2 { font-size: 18px; margin: 0 0 2px 0; }
+.sl-cap { font-size: 12px; color: #6B6660; margin: 0 0 10px 0; }
+.sl-meta { font-size: 12px; color: #6B6660; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---- notes ---- */
+.sl-note { font-size: 12.5px; color: #4A4640; background: #F2EEE7; border-left: 2px solid #1F3A5F; padding: 8px 12px; margin: 6px 0 4px 0; }
+.sl-warn { border-left-color: #A65A44; }
+
+/* ---- KPI strip ---- */
+.sl-kpis { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #E6E1D8; border-bottom: 1px solid #E6E1D8; margin: 10px 0 4px 0; }
+.sl-kpi { padding: 12px 16px 12px 0; }
+.sl-kpi + .sl-kpi { border-left: 1px solid #E6E1D8; padding-left: 16px; }
+.sl-kpi .v { font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-variant-numeric: tabular-nums; color: #2B2B2B; line-height: 1.15; }
+.sl-kpi .l { font-size: 12px; color: #6B6660; margin-top: 2px; }
+
+/* ---- steps ---- */
+.sl-steps { display: flex; gap: 0; border-bottom: 1px solid #E6E1D8; margin: 4px 0 18px 0; }
+.sl-step { flex: 1; font-size: 12.5px; color: #8A847C; padding: 6px 0; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.sl-step b { font-variant-numeric: tabular-nums; margin-right: 6px; font-weight: 600; }
+.sl-step.done { color: #4A4640; }
+.sl-step.active { color: #1F3A5F; border-bottom-color: #1F3A5F; font-weight: 600; }
+
+/* ---- theme dot ---- */
+.sl-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.sl-theme { white-space: nowrap; font-size: 13px; }
+
+/* ---- evidence quotes ---- */
+.sl-quote { border-left: 3px solid #1F3A5F; padding: 4px 0 4px 14px; margin: 14px 0 16px 0; }
+.sl-quote .q { font-family: 'Source Serif 4', Georgia, serif; font-size: 15.5px; line-height: 1.55; color: #2B2B2B; }
+.sl-quote .m { font-size: 12px; color: #6B6660; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.sl-quote mark { padding: 0 2px; border-radius: 2px; color: inherit; }
+
+/* ---- compact tables ---- */
+table.sl-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+table.sl-table th { text-align: left; font-weight: 500; color: #6B6660; font-size: 12px; border-bottom: 1px solid #E6E1D8; padding: 6px 10px 6px 0; }
+table.sl-table td { border-bottom: 1px solid #F0ECE5; padding: 7px 10px 7px 0; vertical-align: top; }
+table.sl-table td.r, table.sl-table th.r { text-align: right; font-variant-numeric: tabular-nums; }
+table.sl-table td.t { width: 58%; }
+table.sl-table td:has(.sl-bar) { white-space: nowrap; }
+.sl-bar { display: inline-block; width: 64px; height: 5px; background: #ECE7DF; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
+.sl-bar > span { display: block; height: 5px; border-radius: 3px; background: #1F3A5F; }
+.sl-flag { font-size: 11px; color: #A65A44; border: 1px solid #E3C9BF; padding: 0 5px; border-radius: 3px; white-space: nowrap; }
+.sl-small { color: #8A847C; }
+
+/* ---- term chips (global explainability) ---- */
+.sl-terms { font-size: 13px; line-height: 1.9; }
+.sl-terms span { white-space: nowrap; margin-right: 12px; }
+.sl-terms em { font-style: normal; color: #8A847C; font-size: 11px; margin-left: 3px; font-variant-numeric: tabular-nums; }
+
+/* ---- sidebar ---- */
+section[data-testid="stSidebar"] { border-right: 1px solid #E6E1D8; }
+.sl-brand { font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; color: #1F3A5F; margin: 0; }
+.sl-brand-sub { font-size: 12px; color: #6B6660; margin: 0 0 6px 0; }
+.sl-about { font-size: 12px; color: #6B6660; line-height: 1.5; border-top: 1px solid #E6E1D8; padding-top: 10px; margin-top: 8px; }
+
+@media (max-width: 900px) { .sl-kpis { grid-template-columns: repeat(2, 1fr); } .sl-kpi:nth-child(3) { border-left: 0; padding-left: 0; } }
