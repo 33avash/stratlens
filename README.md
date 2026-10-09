@@ -1,71 +1,103 @@
 # StratLens
 
-StratLens classifies strategy passages in Indian FMCG annual reports (the Chairman/CEO letter and MD&A) into six themes plus Other. It then compares each company's **disclosure emphasis** (how much of the narrative each theme gets) and how **concretely** they write, across companies and years. Every number traces back to source passages.
+**What do Indian FMCG companies emphasise when they describe their strategy, and how concretely?**
 
-Built for NLP CA3 (Build–Audit–Pitch). See `WRITEUP.md`, `MODEL_CARD.md`, `PITCH.md` and `PLAN_v2.md`.
+StratLens reads the Chairman/CEO letter and MD&A of annual reports, classifies every passage into one of six strategy themes (or Other), and compares each company's **share of narrative** per theme across companies and years. Every number links back to the passages behind it.
 
-## Setup
-Requires Python 3.11+ (developed on 3.13, Windows).
+![Overview](docs/screenshots/overview.png)
+
+> Shares measure disclosure emphasis, not spending, execution or results.
+
+## Results
+
+5 reports (HUL FY25–26, Dabur FY25–26, Nestlé India FY26) → 1,184 passages → 885 labelled (708 train / 177 held-out test).
+
+| Model (same held-out test set) | Accuracy | Macro-F1 | 95% CI |
+|---|---|---|---|
+| **TF-IDF + logistic regression, masked** (served) | 0.81 | **0.77** | 0.69–0.84 |
+| MiniLM embeddings + logistic regression, masked | 0.79 | 0.77 | 0.69–0.83 |
+| TF-IDF + logistic regression, unmasked | 0.81 | 0.78 | 0.69–0.84 |
+| Keyword baseline | 0.49 | 0.49 | 0.41–0.55 |
+
+Embeddings tie with TF-IDF (paired difference −0.01, CI −0.07 to +0.06), so the model that can be explained term by term is served.
+
+**Audit findings**
+- **House style:** masking names, brands and numbers doesn't change theme accuracy, but the company is still **79%** identifiable from masked text (chance 49%). Cross-company differences may partly reflect writing style.
+- **Error direction:** the largest group of errors (15 of 34) is strategy passages predicted as Other; the reverse happens 7 times. Theme shares are likely conservative.
+- **Nestlé India** scores lower (macro-F1 0.44 vs 0.82 for HUL), but on only n = 25 test passages, so this is indicative.
+
+**Finding:** the only year-over-year shift that clears bootstrap noise is Dabur's digital & e-commerce share, 6% → 14%.
+
+## How it works
+
+```mermaid
+flowchart LR
+  A[Extract<br/>PyMuPDF] --> B[Clean] --> C[Segment<br/>8–70 words] --> D[Mask<br/>names · brands · numbers] --> E[TF-IDF<br/>1–2 grams] --> F[Logistic<br/>regression] --> G[Confidence<br/>flag below 0.45] --> H[Theme shares<br/>+ bootstrap CIs]
+  C --> I[spaCy NER + rules] --> J[Specificity 0–5]
+  C --> K[BM25 + MiniLM<br/>rank fusion] --> L[Gemini: Ask<br/>cited answers]
+  H --> M[Gemini: Briefs<br/>prose only]
+  J --> M
+```
+
+The classifier produces every label and number. The optional LLM (Gemini) only writes prose from computed figures and answers questions from retrieved passages; numbers it writes are checked against the data, and it refuses when nothing relevant is retrieved. The app's **How it works** page has an inspector that runs any sentence through each step.
+
+![Pipeline inspector](docs/screenshots/how_it_works.png)
+
+## Quick start
+
+Python 3.11+.
+
 ```bash
-cd stratlens
-python -m venv .venv && .venv\Scripts\activate      # optional
-pip install -r requirements.txt                      # CPU-only torch; includes the spaCy model
+pip install -r requirements.txt     # CPU-only torch; includes the spaCy model
+streamlit run app.py
 ```
-The first run downloads the sentence-transformers model `all-MiniLM-L6-v2` (about 90 MB) from Hugging Face.
 
-### AI writing (optional)
+Trained artefacts are committed, so the app runs without retraining or the source PDFs. The first run downloads `all-MiniLM-L6-v2` (~90 MB).
+
+**Optional AI writing:** copy `.env.example` to `.env` and set `GEMINI_API_KEY` (optional `GEMINI_MODEL`, default `gemini-3.5-flash`). Without a key, everything works with template text.
+
+## App
+
+| Section | Page | What it shows |
+|---|---|---|
+| Analysis | Overview | Strategy fingerprint, per-report summary, how much vs how concretely, YoY shifts with 95% CIs, evidence passages |
+| | Briefs | One-page brief per report or a 2–3 company comparison; HTML/PDF export |
+| | Ask | Question → hybrid retrieval over all passages → cited answer |
+| Data | Upload | Classify a new report (PDF/TXT) and add it to the Overview |
+| Model | How it works | Pipeline diagram, stage table, step-by-step inspector |
+| | Evaluation | Model comparison, robustness (subgroups, masking, author probe, cross-year), explainability, errors |
+| | Model card | Generated `MODEL_CARD.md` |
+
+![Evaluation](docs/screenshots/evaluation.png)
+
+## Reproduce
+
+Put the reports in `data/raw/` as `COMPANY_FYyyyy.pdf` (not in the repo; page ranges are in `config/section_overrides.csv`), then:
+
 ```bash
-copy .env.example .env      # then set GEMINI_API_KEY=...
+python scripts/build_corpus.py   # extract → clean → segment → data/processed/corpus.csv
+python train.py                  # tune, compare, audit → models/, reports/metrics.json, MODEL_CARD.md
+python -m pytest -q              # 58 tests
 ```
-| Variable | Meaning |
-|---|---|
-| `GEMINI_API_KEY` | Google Gemini API key. Without it the app runs fully and uses template text. |
-| `GEMINI_MODEL` | Optional; default `gemini-3.5-flash`. |
 
-`.env` is git-ignored. On Streamlit Cloud, put the same keys under *App settings → Secrets*.
+## Repository
 
-Gemini only writes prose from figures the pipeline has already computed, and answers questions from retrieved passages with citations. It never labels passages or computes metrics. Generated text is cached in `data/cache/llm.json`, so repeated demos don't call the API again.
-
-## Data
-Put the annual report PDFs in `data/raw/`, named `COMPANY_FYyyyy.pdf`. They are not in the repo. The page ranges used are confirmed by hand in `config/section_overrides.csv`.
-
-| File | Report |
-|---|---|
-| `HUL_FY2025.pdf`, `HUL_FY2026.pdf` | Hindustan Unilever Integrated Annual Reports 2024-25, 2025-26 |
-| `DABUR_FY2025.pdf`, `DABUR_FY2026.pdf` | Dabur India Integrated Annual Reports 2024-25, 2025-26 |
-| `NESTLE_FY2026.pdf` | Nestlé India Annual Report 2025-26 (FY2025 not yet added) |
-
-## Commands
-```bash
-python scripts/build_corpus.py          # extract, section, clean, segment -> data/processed/corpus.csv
-python train.py                         # split, tune, compare models, masking test, CIs, audit,
-                                        #   benchmark predictions + specificity, MODEL_CARD.md
-python -m pytest -q                     # tests
-streamlit run app.py                    # launch
 ```
-Labelling pipeline (already done): `scripts/sample_for_labelling.py` draws the sample, the drafted batches are in `data/labels/drafts/`, `scripts/merge_labels.py` merges them. Labels were AI-drafted following `docs/labelling_guidelines.md` and have not been human-verified.
-
-## App pages
-| Page | What it does |
-|---|---|
-| Overview | Per-report summaries, strategy fingerprint, "how much vs how concretely", YoY shifts with 95% intervals, evidence with fired specificity signals |
-| Briefs | Strategy brief for one report or 2–3 companies; HTML and PDF export |
-| Ask | Question → hybrid retrieval over all passages (BM25 + embeddings, rank fusion) → cited answer (needs Gemini; without it, passages only) |
-| Upload | Upload PDF/TXT → check → classify → export, or add the report to the session benchmark |
-| How it works | Pipeline diagram, one line per stage, and a pipeline inspector for any sentence |
-| Evaluation | Model comparison, masking test, CIs, subgroups, explainability, errors |
-| Model card | Generated `MODEL_CARD.md` |
-
-## Layout
+app.py, views/        Streamlit app (one file per page)
+stratlens/            pipeline: extract, preprocess, masking, model, explain, audit, uncertainty,
+                      specificity, compare, report, trace; llm/ (Gemini client, prompts, retrieval)
+train.py, scripts/    training, corpus build, labelling, benchmark, model card
+data/                 corpus, labels, splits, predictions, caches (raw PDFs git-ignored)
+models/, reports/     trained classifier, metrics.json, error analysis
+docs/                 write-up, pitch, labelling guidelines, specificity spot-check
+tests/                pytest suite
 ```
-app.py, views/            Streamlit UI (named views/ so Streamlit's legacy pages/ auto-routing stays off)
-stratlens/                extract, sections, preprocess, masking, dataset, baseline, model, embeddings, explain,
-                          audit, uncertainty, specificity, compare, trace, report, theme, ui
-stratlens/llm/            client (Gemini), prompts (all LLM prompts), retrieval
-scripts/                  corpus, labelling, benchmark, agreement, model card
-data/                     raw (git-ignored), processed, labels, splits, cache (embeddings, NER, LLM text)
-models/, reports/         trained model, metrics.json, error notes
-assets/                   stylesheet, logo, OFL fonts for PDF export
-docs/                     labelling guidelines, specificity spot-check, screenshots
-tests/                    pytest suite
-```
+
+## Limitations
+
+- **Labels** were AI-drafted following [`docs/labelling_guidelines.md`](docs/labelling_guidelines.md) and have **not been human-verified**. Scores measure agreement with those drafts.
+- **Small data:** 5 reports, 3 companies, 9–79 test passages per theme; Nestlé has one year only.
+- **Bag of words** misses negation, tense and intent.
+- **Specificity** is rule-based (48/60 tiers agreed in two spot-checks) and favours brand-by-brand writing.
+
+More: [model card](MODEL_CARD.md) · [write-up](docs/writeup.md) · [pitch](docs/pitch.md)
