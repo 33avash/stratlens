@@ -2,6 +2,12 @@
 
 Shares measure disclosure emphasis (how much of a report's strategic narrative is spent on a theme),
 not investment or execution.
+
+Definitions used on every page:
+  passages            all passages in scope (low-confidence ones removed when that filter is on)
+  strategic passages  passages in scope whose predicted theme is not OTHER
+  share               theme passages / strategic passages, per company-year
+  vs peers            share minus the simple average share of the other companies in the same year (pp)
 """
 from __future__ import annotations
 
@@ -10,13 +16,20 @@ import pandas as pd
 from .config import STRATEGIC_THEMES
 
 LABEL_COL = "pred"
+VS_PEERS_HELP = ("Percentage points above or below the simple average share of the other companies in the same "
+                 "year. Shares are theme passages divided by strategic (non-Other) passages.")
+
+
+def in_scope(preds: pd.DataFrame, exclude_review: bool = False) -> pd.DataFrame:
+    """All passages that count, strategic or not: the denominator for 'share of passages'."""
+    if exclude_review and "needs_review" in preds:
+        return preds[~preds["needs_review"].astype(bool)]
+    return preds
 
 
 def strategic(preds: pd.DataFrame, exclude_review: bool = False) -> pd.DataFrame:
-    df = preds[preds[LABEL_COL].isin(STRATEGIC_THEMES)]
-    if exclude_review and "needs_review" in df:
-        df = df[~df["needs_review"].astype(bool)]
-    return df
+    df = in_scope(preds, exclude_review)
+    return df[df[LABEL_COL].isin(STRATEGIC_THEMES)]
 
 
 def theme_shares(preds: pd.DataFrame, exclude_review: bool = False) -> pd.DataFrame:

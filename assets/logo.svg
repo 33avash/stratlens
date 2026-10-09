@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="40" viewBox="0 0 200 40">
-  <rect x="0" y="9" width="4" height="22" fill="#1F3A5F"/>
-  <text x="12" y="28" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="23" font-weight="600" fill="#1F3A5F">StratLens</text>
+  <rect x="0" y="13" width="5" height="15" rx="1.5" fill="#1E9E55"/>
+  <rect x="7" y="8" width="5" height="20" rx="1.5" fill="#1E9E55"/>
+  <rect x="14" y="17" width="5" height="11" rx="1.5" fill="#1E9E55" opacity="0.55"/>
+  <text x="27" y="27" font-family="Geist, Inter, 'Segoe UI', Arial, sans-serif" font-size="19" font-weight="600" fill="#141A17">StratLens</text>
 </svg>

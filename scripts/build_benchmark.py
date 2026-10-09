@@ -8,9 +8,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import json
+
 import pandas as pd
 
 from stratlens import model as mdl
+from stratlens import specificity
 from stratlens.config import BENCHMARK_CSV, CORPUS_CSV, LABELS_CSV, TRAIN_CSV
 
 
@@ -19,6 +22,10 @@ def main() -> None:
     corpus = pd.read_csv(CORPUS_CSV)
     preds = mdl.predict_frame(clf, corpus["text"], threshold=meta["threshold"])
     out = pd.concat([corpus.reset_index(drop=True), preds], axis=1)
+    spec = specificity.score_texts(out["text"].tolist())
+    out["specificity"] = [s["specificity"] for s in spec]
+    out["spec_tier"] = [s["spec_tier"] for s in spec]
+    out["spec_signals"] = [json.dumps(s["spec_signals"], ensure_ascii=False) for s in spec]
     # Provenance flags so the UI can be honest about which passages the model saw in training.
     train_texts = set(pd.read_csv(TRAIN_CSV)["text"]) if TRAIN_CSV.exists() else set()
     out["in_training_set"] = out["text"].isin(train_texts)
@@ -28,6 +35,7 @@ def main() -> None:
     out.to_csv(BENCHMARK_CSV, index=False)
     print(f"benchmark: {len(out)} passages -> {BENCHMARK_CSV}")
     print(out.groupby(["company", "year"])["pred"].value_counts(normalize=True).unstack(fill_value=0).round(3))
+    print("specificity tiers:", out["spec_tier"].value_counts().to_dict())
 
 
 if __name__ == "__main__":

@@ -3,32 +3,34 @@ import streamlit as st
 
 st.set_page_config(page_title="StratLens", layout="wide", initial_sidebar_state="expanded")
 
-from stratlens import ui  # noqa: E402  (after set_page_config)
+from stratlens import theme, ui  # noqa: E402  (after set_page_config)
 
 ui.inject_css()
 
-pages = [
-    st.Page("pages/benchmark.py", title="Benchmark", default=True),
-    st.Page("pages/analyse.py", title="Analyse reports"),
-    st.Page("pages/audit.py", title="Model audit"),
-    st.Page("pages/model_card.py", title="Model card"),
-]
+pages = {
+    "Analysis": [
+        st.Page("views/benchmark.py", title="Overview", icon=":material/space_dashboard:", default=True),
+        st.Page("views/reports.py", title="Briefs", icon=":material/description:", url_path="briefs"),
+        st.Page("views/ask.py", title="Ask", icon=":material/forum:", url_path="ask"),
+    ],
+    "Data": [
+        st.Page("views/analyse.py", title="Upload", icon=":material/upload_file:", url_path="upload"),
+    ],
+    "Model": [
+        st.Page("views/how_it_works.py", title="How it works", icon=":material/account_tree:", url_path="how-it-works"),
+        st.Page("views/audit.py", title="Evaluation", icon=":material/monitoring:", url_path="evaluation"),
+        st.Page("views/model_card.py", title="Model card", icon=":material/badge:", url_path="model-card"),
+    ],
+}
 
-st.logo(str(ui.ROOT / "assets" / "logo.svg"), size="large")
+logo = "logo_dark.svg" if theme.is_dark() else "logo.svg"
+st.logo(str(ui.ROOT / "assets" / logo), size="large")
 nav = st.navigation(pages, position="sidebar")
 
-with st.sidebar:
-    st.markdown('<p class="sl-brand-sub">FMCG strategy disclosure intelligence</p>', unsafe_allow_html=True)
-    bench = ui.load_benchmark()
-    if bench is not None:
-        reports = ", ".join(f"{ui.company_name(c)} {y}" for c, y in
-                            bench[["company", "year"]].drop_duplicates().sort_values(["company", "year"]).values)
-        about = (f"Sample analysis of {bench[['company', 'year']].drop_duplicates().shape[0]} annual reports: "
-                 f"{reports}. Only the Chairman/CEO letter and MD&A are analysed.")
-    else:
-        about = "No sample analysis built yet."
-    st.markdown(f'<div class="sl-about"><b>About the data</b><br>{about}<br><br>Training labels were drafted by an '
-                'AI assistant and are pending human verification. Theme shares measure disclosure emphasis, not '
-                'investment or execution.</div>', unsafe_allow_html=True)
+metrics = ui.load_metrics()
+if metrics:
+    with st.sidebar:
+        st.markdown(f'<div class="sl-sbfoot">model · tf-idf + lr<br>data · {metrics["generated"]}</div>',
+                    unsafe_allow_html=True)
 
 nav.run()

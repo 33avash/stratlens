@@ -1,42 +1,56 @@
-"""Single source of truth for colours, typography and the shared Plotly template."""
-import plotly.graph_objects as go
-import plotly.io as pio
+"""Design tokens shared by every page and chart. Mark colours are chosen to read on both light and dark."""
+import streamlit as st
 
-BG = "#FAF8F4"
-SURFACE = "#FFFFFF"
-BORDER = "#E6E1D8"
-TEXT = "#2B2B2B"
-MUTED = "#6B6660"
-ACCENT = "#1F3A5F"
-POSITIVE = "#1F3A5F"   # YoY increase (navy)
-NEGATIVE = "#A65A44"   # YoY decrease (terracotta)
-GRID = "#EEEAE3"
+# ---- marks (mode-neutral)
+ACCENT = "#1E9E55"
+POSITIVE = "#1E9E55"
+NEGATIVE = "#D2553B"
+NOISE_POS = "rgba(30,158,85,0.28)"
+NOISE_NEG = "rgba(210,85,59,0.28)"
+WARN = "#C88A1E"
+MUTED = "#7C8781"   # mid-grey: readable on white and on near-black
+FAINT = "#7C8781"
+GRID = "rgba(124,135,129,0.18)"
+SANS = "Geist, Inter, 'Segoe UI', system-ui, sans-serif"
+MONO = "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
 
-SERIF = "'Source Serif 4', Georgia, serif"
-SANS = "Inter, 'Segoe UI', system-ui, sans-serif"
+# Theme hues (always shown next to their name).
+THEME_COLORS = {"PROD": "#3F66A6", "DIST": "#2FB0A2", "DIGI": "#8C78D2", "OPS": "#D9A23A",
+                "SUST": "#4E8A2A", "BRAND": "#B8427F", "OTHER": "#8E9893"}
+# Companies never reuse a theme hue: colour always means theme. Companies get low-chroma neutrals
+# (grey / sand / slate), shown together with their initials, so they read on white and on near-black.
+COMPANY_COLORS = {"HUL": "#A7AEAA", "DABUR": "#BCAE92", "NESTLE": "#7E8994"}
+FALLBACK_COMPANY_COLORS = ["#C9C4BA", "#8F8A82", "#B4B9BD"]
+COMPANY_INITIALS = {"HUL": "HUL", "DABUR": "DAB", "NESTLE": "NES"}
 
-# Theme hues: the brief's palette, with SUST and BRAND re-stepped in lightness because the original
-# olive/terracotta pair was indistinguishable under deuteranopia (validator dE 0.6 -> 4.6). Theme colour is
-# never the only cue: every theme mark is accompanied by its text label.
-THEME_COLORS = {
-    "PROD": "#1F3A5F",
-    "DIST": "#3E7C78",
-    "DIGI": "#5B6FA8",
-    "OPS": "#B8893B",
-    "SUST": "#5E7A28",
-    "BRAND": "#C0604A",
-    "OTHER": "#A39E96",
-}
-# Company hues: validated categorical set (passes lightness, chroma, CVD and normal-vision checks on white).
-COMPANY_COLORS = {"HUL": "#24578A", "DABUR": "#C27C2E", "NESTLE": "#7D4E9E"}
-FALLBACK_COMPANY_COLORS = ["#4F6D7A", "#8C6D46", "#5E5A80"]
+SEQ_LIGHT = [[0.0, "#F1F4F1"], [0.3, "#CDE7D7"], [0.6, "#76C495"], [0.85, "#2C9D5B"], [1.0, "#146B3A"]]
+SEQ_DARK = [[0.0, "#18201C"], [0.3, "#1D3A2A"], [0.6, "#24683F"], [0.85, "#2F9A5A"], [1.0, "#5BD08A"]]
 
-# Sequential single-hue scale for heatmaps (light -> navy).
-SEQUENTIAL = [[0.0, "#F4F1EA"], [0.25, "#D5DCE6"], [0.55, "#8EA3BF"], [0.8, "#47648C"], [1.0, "#1F3A5F"]]
+PLOTLY_CONFIG = {"displayModeBar": False, "responsive": True}
+
+
+def is_dark() -> bool:
+    try:
+        return st.context.theme.type == "dark"
+    except Exception:
+        return False
+
+
+def sequential():
+    return SEQ_DARK if is_dark() else SEQ_LIGHT
+
+
+def ink() -> str:
+    """Primary text colour for the current mode (for chart annotations that need explicit colour)."""
+    return "#E4E9E5" if is_dark() else "#141A17"
 
 
 def company_color(code: str, i: int = 0) -> str:
     return COMPANY_COLORS.get(code, FALLBACK_COMPANY_COLORS[i % len(FALLBACK_COMPANY_COLORS)])
+
+
+def company_initials(code: str) -> str:
+    return COMPANY_INITIALS.get(code, code[:3].upper())
 
 
 def tint(hex_color: str, alpha: float = 0.15) -> str:
@@ -45,38 +59,18 @@ def tint(hex_color: str, alpha: float = 0.15) -> str:
     return f"rgba({r},{g},{b},{alpha})"
 
 
-def _luminance(hex_color: str) -> float:
-    def ch(c):
-        c /= 255
-        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
-    h = hex_color.lstrip("#")
-    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
-    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b)
-
-
-def contrast(a: str, b: str) -> float:
-    la, lb = sorted([_luminance(a), _luminance(b)], reverse=True)
-    return (la + 0.05) / (lb + 0.05)
-
-
-TEMPLATE = go.layout.Template(
-    layout=go.Layout(
-        font=dict(family=SANS, size=12, color=TEXT),
-        paper_bgcolor=SURFACE,
-        plot_bgcolor=SURFACE,
-        margin=dict(l=8, r=16, t=8, b=8),
-        hoverlabel=dict(bgcolor=SURFACE, bordercolor=BORDER, font=dict(family=SANS, size=12, color=TEXT)),
-        xaxis=dict(showgrid=False, zeroline=False, linecolor=BORDER, ticks="", tickfont=dict(color=MUTED, size=11),
-                   title=dict(font=dict(color=MUTED, size=11))),
-        yaxis=dict(showgrid=True, gridcolor=GRID, zeroline=False, linecolor=BORDER, ticks="",
-                   tickfont=dict(color=MUTED, size=11), title=dict(font=dict(color=MUTED, size=11))),
-        legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0, font=dict(size=11, color=MUTED),
-                    bgcolor="rgba(0,0,0,0)"),
-        bargap=0.28,
-        bargroupgap=0.08,
+def style(fig, height: int, margin=None, legend: bool = True):
+    """Shared chart styling. Background is transparent so the card shows through in either mode;
+    tick and legend colours come from Streamlit's adaptive chart theme."""
+    fig.update_layout(
+        height=height, margin=margin or dict(l=4, r=12, t=8, b=4),
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family=SANS, size=12),
+        hoverlabel=dict(font=dict(family=SANS, size=12)),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, font=dict(size=11),
+                    title_text="") if legend else None,
+        showlegend=legend,
     )
-)
-pio.templates["stratlens"] = TEMPLATE
-pio.templates.default = "simple_white+stratlens"
-
-PLOTLY_CONFIG = {"displayModeBar": False, "responsive": True}
+    fig.update_xaxes(gridcolor=GRID, zeroline=False, tickfont=dict(family=MONO, size=10.5))
+    fig.update_yaxes(gridcolor=GRID, zeroline=False)
+    return fig

@@ -2,7 +2,7 @@
 
 Draft line format: "<row index in labelling_sample.csv> <LABEL> [optional note]".
 Labels were drafted by Claude during the build session (not at app runtime) and are marked
-label_source = "ai_drafted" until verified by a human (see scripts/compute_agreement.py).
+label_source = "ai_drafted" (labels have not been human-verified).
 Usage: python scripts/merge_labels.py
 """
 import sys

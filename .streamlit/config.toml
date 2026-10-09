@@ -1,15 +1,38 @@
 [theme]
-base = "light"
-primaryColor = "#1F3A5F"
-backgroundColor = "#FAF8F4"
-secondaryBackgroundColor = "#F2EEE7"
-textColor = "#2B2B2B"
-borderColor = "#E6E1D8"
-baseRadius = "small"
+font = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap, sans-serif"
+headingFont = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap, sans-serif"
+codeFont = "Geist Mono:https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap, monospace"
+baseFontSize = 14
+baseRadius = "medium"
 showWidgetBorder = true
+primaryColor = "#1E9E55"
+
+[theme.light]
+backgroundColor = "#F2F3F1"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#141A17"
+borderColor = "#E3E6E2"
+
+[theme.light.sidebar]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F2F3F1"
+textColor = "#3A443E"
+borderColor = "#E3E6E2"
+
+[theme.dark]
+backgroundColor = "#0C100E"
+secondaryBackgroundColor = "#161C19"
+textColor = "#E4E9E5"
+borderColor = "#252D29"
+
+[theme.dark.sidebar]
+backgroundColor = "#101512"
+secondaryBackgroundColor = "#1A211D"
+textColor = "#B9C3BD"
+borderColor = "#232B27"
 
 [client]
-toolbarMode = "minimal"
+toolbarMode = "viewer"
 showSidebarNavigation = true
 
 [server]

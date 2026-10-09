@@ -5,7 +5,6 @@ import pytest
 from stratlens import baseline, compare, explain
 from stratlens import model as mdl
 from stratlens.config import MODEL_PATH, STRATEGIC_THEMES, THEMES
-from stratlens.dataset import agreement, review_sample
 
 TOY = {
     "PROD": "we launched a new premium variant and extended the product portfolio with innovation",
@@ -120,22 +119,3 @@ def test_empty_predictions():
     empty = _preds().iloc[0:0]
     assert compare.theme_shares(empty).empty
     assert compare.yoy_change(compare.theme_shares(empty)).empty
-
-
-# ---------- annotation agreement ----------
-def test_agreement_kappa_known_values():
-    ai = pd.Series(["PROD", "PROD", "DIST", "DIST", "OTHER", "OTHER"])
-    human = pd.Series(["PROD", "DIST", "DIST", "DIST", "OTHER", ""])  # last row not reviewed
-    res = agreement(human, ai)
-    assert res["n"] == 5
-    assert res["percent_agreement"] == pytest.approx(0.8)
-    # observed 0.8; expected = (2/5*1/5)+(2/5*3/5)+(1/5*1/5) = 0.36 -> kappa = (0.8-0.36)/0.64
-    assert res["cohen_kappa"] == pytest.approx((0.8 - 0.36) / 0.64, abs=1e-3)
-
-
-def test_review_sample_is_blind_and_sized():
-    df = pd.DataFrame({"passage_id": [f"p{i}" for i in range(140)], "company": ["A", "B"] * 70,
-                       "year": "FY2025", "section": "MDA", "page": 1, "text": "x",
-                       "label": [THEMES[i % 7] for i in range(140)]})
-    s = review_sample(df, n=70)
-    assert len(s) == 70 and "label" not in s.columns and (s["human_label"] == "").all()

@@ -8,25 +8,39 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
 
 from .config import MODEL_PATH, REVIEW_THRESHOLD, SEED
+from .masking import mask
 
 C_GRID = [0.1, 0.3, 1, 3, 10, 30, 100, 300]
 CV_FOLDS = 5
 
 
-def build_pipeline(C: float = 1.0) -> Pipeline:
+def mask_texts(texts):
+    """Pipeline step: mask company/brand names, numbers and years (module-level so the model pickles)."""
+    return [mask(t) for t in texts]
+
+
+def identity(texts):
+    return list(texts)
+
+
+def build_pipeline(C: float = 1.0, masked: bool = True) -> Pipeline:
     return Pipeline([
+        ("mask", FunctionTransformer(mask_texts if masked else identity)),
         ("tfidf", TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True, min_df=2,
-                                  stop_words="english", strip_accents="unicode")),
+                                  stop_words="english", strip_accents="unicode",
+                                  token_pattern=r"(?u)\b\w\w+\b")),
         ("clf", LogisticRegression(C=C, class_weight="balanced", max_iter=5000, random_state=SEED)),
     ])
 
 
-def tune(texts: pd.Series, labels: pd.Series) -> GridSearchCV:
+def tune(texts: pd.Series, labels: pd.Series, masked: bool = True, estimator=None, grid=None) -> GridSearchCV:
     """Choose C by stratified k-fold CV on the training set only (macro-F1)."""
     search = GridSearchCV(
-        build_pipeline(), {"clf__C": C_GRID}, scoring="f1_macro",
+        estimator if estimator is not None else build_pipeline(masked=masked),
+        grid if grid is not None else {"clf__C": C_GRID}, scoring="f1_macro",
         cv=StratifiedKFold(CV_FOLDS, shuffle=True, random_state=SEED), n_jobs=1,
     )
     search.fit(texts, labels)

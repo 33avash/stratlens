@@ -76,28 +76,90 @@ def most_confused(cm: dict) -> dict | None:
     return {"true": labs[i], "pred": labs[j], "count": int(m[i, j]), "true_support": support}
 
 
-def key_finding(model_m: dict, base_m: dict, subs: list[dict], confused: dict | None) -> str:
-    """Plain-English finding assembled from the numbers (no hand-written values)."""
-    parts = [f"On {model_m['n']} held-out passages the model reaches macro-F1 {model_m['macro_f1']:.2f} "
-             f"versus {base_m['macro_f1']:.2f} for the keyword baseline."]
-    best_gap = None
+def largest_gap(subs: list[dict]) -> tuple | None:
+    """(gap, dimension, weaker group, stronger group) among subgroups with n >= SMALL_N."""
+    best = None
     for dim in SUBGROUP_DIMENSIONS.values():
         eligible = [s for s in subs if s["dimension"] == dim and not s["too_small"]]
         if len(eligible) >= 2:
             lo = min(eligible, key=lambda s: s["macro_f1"])
             hi = max(eligible, key=lambda s: s["macro_f1"])
             gap = hi["macro_f1"] - lo["macro_f1"]
-            if best_gap is None or gap > best_gap[0]:
-                best_gap = (gap, dim, lo, hi)
-    if best_gap:
-        gap, dim, lo, hi = best_gap
-        parts.append(f"The largest subgroup gap is by {dim.lower()}: macro-F1 {lo['macro_f1']:.2f} for "
-                     f"{lo['group']} (n={lo['n']}) against {hi['macro_f1']:.2f} for {hi['group']} (n={hi['n']}), "
-                     f"a gap of {gap:.2f}.")
-    small = [f"{s['group']} (n={s['n']})" for s in subs if s["too_small"]]
-    if small:
-        parts.append("Groups too small to conclude: " + ", ".join(small) + ".")
-    if confused:
-        parts.append(f"The most frequent error is {confused['true']} passages predicted as {confused['pred']} "
-                     f"({confused['count']} of {confused['true_support']}).")
+            if best is None or gap > best[0]:
+                best = (gap, dim, lo, hi)
+    return best
+
+
+def _ci(s: dict) -> str:
+    ci = s.get("macro_f1_ci")
+    return f" [{ci[0]:.2f}–{ci[1]:.2f}]" if ci else ""
+
+
+def _name(group: str) -> str:
+    from .config import COMPANY_NAMES
+    return COMPANY_NAMES.get(group, group)
+
+
+def _overlap(a: dict, b: dict) -> bool:
+    ca, cb = a.get("macro_f1_ci"), b.get("macro_f1_ci")
+    if not ca or not cb:
+        return True
+    lo, hi = (a, b) if a["macro_f1"] <= b["macro_f1"] else (b, a)
+    return lo["macro_f1_ci"][1] >= hi["macro_f1_ci"][0]
+
+
+def clearest_gap(subs: list[dict]) -> tuple | None:
+    """Largest within-dimension gap whose 95% CIs do not overlap (any n), else None."""
+    best = None
+    for dim in SUBGROUP_DIMENSIONS.values():
+        groups = [s for s in subs if s["dimension"] == dim]
+        for i, a in enumerate(groups):
+            for b in groups[i + 1:]:
+                if not _overlap(a, b):
+                    lo, hi = (a, b) if a["macro_f1"] < b["macro_f1"] else (b, a)
+                    gap = hi["macro_f1"] - lo["macro_f1"]
+                    if best is None or gap > best[0]:
+                        best = (gap, dim, lo, hi)
+    return best
+
+
+def error_direction(cm: dict) -> dict:
+    """Split test errors into strategic->OTHER (missed), OTHER->strategic (invented) and strategic->strategic."""
+    m, labs = np.array(cm["matrix"]), cm["labels"]
+    o = labs.index("OTHER")
+    total = int(m.sum() - np.trace(m))
+    missed = int(m[:, o].sum() - m[o, o])
+    invented = int(m[o].sum() - m[o, o])
+    per_theme = {t: {"to_other": int(m[i, o]), "support": int(m[i].sum())} for i, t in enumerate(labs) if t != "OTHER"}
+    return {"total": total, "strategic_to_other": missed, "other_to_strategic": invented,
+            "between_themes": total - missed - invented, "per_theme": per_theme}
+
+
+def key_finding(m: dict) -> str:
+    """Plain-English key audit finding assembled from metrics.json values (no hand-written numbers).
+
+    Order: (a) masking and house style, (b) direction of errors, (c) the subgroup gap, flagged when n is small."""
+    parts = []
+    mk = m.get("masking")
+    if mk:
+        p = mk["company_probe"]
+        change = ("does not change theme accuracy" if abs(mk["diff"]) < 0.005 else
+                  f"changes theme macro-F1 by {mk['diff']:+.2f}")
+        parts.append(f"Masking company names, brands and numbers {change} (paired CI {mk['diff_ci'][0]:+.2f} to "
+                     f"{mk['diff_ci'][1]:+.2f}), but company identity is still {p['masked']:.0%} predictable from "
+                     f"masked text (majority guess {p['majority_baseline']:.0%}), so house style may confound "
+                     "cross-company comparisons.")
+    ed = error_direction(m["test"]["confusion"])
+    if ed["total"]:
+        lead = ("Most errors are" if ed["strategic_to_other"] * 2 > ed["total"] else "The largest group of errors is")
+        parts.append(f"{lead} strategic passages predicted as Other ({ed['strategic_to_other']} of {ed['total']}; "
+                     f"the reverse happens {ed['other_to_strategic']} times), so strategy passages are missed more "
+                     "often than invented and theme shares are likely conservative.")
+    clear = clearest_gap(m["subgroups"])
+    if clear:
+        g, dim, lo, hi = clear
+        small = (f" Only n = {lo['n']} test passages come from {_name(lo['group'])}, so treat this as indicative."
+                 if lo["too_small"] else "")
+        parts.append(f"By {dim.lower()}, {_name(lo['group'])} scores macro-F1 {lo['macro_f1']:.2f}{_ci(lo)} against "
+                     f"{hi['macro_f1']:.2f}{_ci(hi)} for {_name(hi['group'])}.{small}")
     return " ".join(parts)

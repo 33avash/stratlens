@@ -1,8 +1,24 @@
+# CPU-only PyTorch (keeps installs small, e.g. on Streamlit Cloud)
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# core pipeline + app
 pymupdf==1.28.2
 pandas==2.3.3
-numpy>=2.0,<3
+numpy==2.4.2
 scikit-learn==1.9.0
-joblib>=1.4
+joblib==1.5.3
 streamlit==1.54.0
 plotly==6.5.2
+
+# v2: embeddings, NER, PDF export, LLM layer
+torch==2.10.0+cpu
+transformers==5.1.0
+sentence-transformers==6.1.0
+spacy==3.8.16
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+fpdf2==2.8.9
+google-genai==1.62.0
+python-dotenv==1.2.1
+
+# tests
 pytest==9.1.1

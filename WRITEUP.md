@@ -1,9 +1,9 @@
-# StratLens: classifying strategic emphasis in FMCG annual reports
+﻿# StratLens: what Indian FMCG companies emphasise in their strategy narratives
 
 ## 1. Problem
-Annual reports are long, and the strategy narrative in them is buried among financial statements, governance and sustainability disclosures. Our question is: **how do competing Indian FMCG companies differ in their communicated strategic priorities, and how do those priorities change year to year?**
+Annual reports run to 250–600 pages, and the strategy story is a small part of them. Our question is: **how do competing Indian FMCG companies differ in what they emphasise when they describe their strategy, how concretely do they say it, and how does that change year to year?**
 
-StratLens answers this by classifying narrative passages into six strategy themes plus Other:
+StratLens classifies narrative passages into six strategy themes plus Other:
 - Product innovation & portfolio (PROD)
 - Market expansion & distribution (DIST)
 - Digital & e-commerce (DIGI)
@@ -11,7 +11,7 @@ StratLens answers this by classifying narrative passages into six strategy theme
 - Sustainability & sourcing (SUST)
 - Consumer & brand strategy (BRAND)
 
-It then compares each theme's normalised share of the strategic narrative across companies and years. Every number links back to the passages behind it. The output measures **disclosure emphasis, not investment or execution**.
+It then compares each theme's share of the strategy narrative across companies and years, scores how specific each passage is, and links every number to its source passages. The output measures **disclosure emphasis, not investment or execution**.
 
 ## 2. Dataset
 | Report | Letter pages | MD&A pages | Passages kept | Labelled |
@@ -22,46 +22,86 @@ It then compares each theme's normalised share of the strategic narrative across
 | Dabur FY2026 | 28–30 | 174–201 | 322 | 233 |
 | Nestlé India FY2026 | 7–8 | 34–37, 42–44 | 144 | 114 |
 
-- **Sources:** official annual report PDFs (HUL, Dabur and Nestlé India for FY2025–FY2026), kept outside version control.
-- **Missing report:** Nestlé India FY2025 was not available, so Nestlé has no year-over-year comparison.
-- **Replaced company:** the brief suggested Marico; Nestlé India replaced it because those were the reports available. ITC was excluded because its report covers non-FMCG businesses.
-- **Section ranges:** confirmed by inspecting each PDF and stored in `config/section_overrides.csv` and `data/sections.csv`.
-- **Labels:** 885 passages, labelled by **AI drafting (Claude, during the build)** under written guidelines with 12 tie-break rules (`docs/labelling_guidelines.md`).
+- **Sources:** official annual report PDFs; page ranges confirmed by hand (`data/sections.csv`). Nestlé India FY2025 is not yet included, so Nestlé has no year-over-year comparison.
+- **Labels:** 885 passages, drafted by an AI assistant (Claude) at build time under written guidelines with 12 tie-break rules (`docs/labelling_guidelines.md`).
 - **Class mix:** PROD 122, DIST 70, DIGI 65, OPS 61, SUST 45, BRAND 129, OTHER 393.
-- **Verification:** a blind 150-passage human-review sample and an agreement/Cohen's kappa script are provided. Verification is pending.
+- **Verification:** labels were AI-drafted following the labelling guidelines and have **not been human-verified**. Every score below measures agreement with those drafts, not with an expert; this is the first limitation listed in the model card.
 
 ## 3. Preprocessing
-1. **Extraction:** text blocks are extracted with PyMuPDF, keeping page numbers. Scanned, corrupt, encrypted and empty files are detected and raise plain-English errors.
-2. **Section restriction:** only the Chairman/CEO letter and MD&A are kept, so 300–600-page reports are not dominated by BRSR, governance and accounts.
-3. **Header/footer removal:** running headers and footers are lines repeated on 3 or more pages; they are removed along with page numbers.
-4. **Block filters:** table-like blocks (over 40% numeric tokens) and headings or captions (fewer than 6 words, or starting with Figure/Source/Note) are dropped.
-5. **Text repair:** hyphenation is repaired, bullets are stripped, and blocks split mid-sentence are merged.
-6. **Segmentation:** a regex sentence splitter that knows abbreviations (Rs., Cr., Mr., i.e.) splits the text, and sentences are packed into passages of up to 70 words.
-7. **Passage filters:** passages under 8 words, statutory boilerplate (Companies Act, AGM, director appointments) and numeric-heavy passages are dropped, and the rest de-duplicated.
-8. **Outcome:** 1,184 passages kept; 464 blocks dropped and logged with a reason.
+1. **Extraction and section restriction:** PyMuPDF extracts text blocks with page numbers. Scanned, corrupt and empty files raise plain-English errors. Only the letter and MD&A pages are kept, so BRSR, governance and accounts don't dominate.
+2. **Cleaning:** removes repeated headers and footers, page numbers, table-like blocks (over 40% numbers), captions and headings, and statutory boilerplate (Companies Act, AGM and director text). It also repairs hyphenation and merges sentences split across blocks.
+3. **Segmentation:** an abbreviation-aware regex sentence splitter (Rs., Cr., Mr., i.e.) packs sentences into passages of 8–70 words, then exact duplicates are removed. Result: 1,184 passages kept, 464 blocks dropped (each logged with a reason).
+4. **Masking (new):** before modelling, company names, 166 curated brand names, numbers and years become `[COMPANY]`, `[BRAND]`, `[NUM]`, `[YEAR]`. Internally they are distinct tokens, so they never collide with real words like "brand". The aim is a model that learns themes rather than authorship.
 
 ## 4. Approach
-- **Model:** TF-IDF on unigrams and bigrams (sublinear tf), then logistic regression with balanced class weights. The model is interpretable, fast and reproducible (seed 42).
-- **Split and tuning:** stratified 80/20 split saved to disk; C tuned by 5-fold CV on the training set only (best C = 30).
-- **Baseline:** a keyword-lexicon baseline written from the guidelines, used only for comparison.
-- **Confidence:** each prediction's confidence is its top-class probability; below 0.45 it is flagged for review. CV showed this flags about 19% of predictions, which is a useful review rate.
-- **Benchmark logic:** theme share = theme passages ÷ strategic (non-Other) passages per company-year. YoY change is in percentage points.
-- **App:** a Streamlit app with four pages (Benchmark, Analyse reports, Model audit, Model card). It loads saved artefacts and never retrains.
+- **Main model:** masked TF-IDF on unigrams and bigrams (sublinear tf), then logistic regression with balanced class weights.
+  - Split: stratified 80/20 (708 train / 177 test, seed 42).
+  - Tuning: C = 10, chosen by 5-fold CV on the training set only.
+- **Comparisons on the same test set:**
+  - `all-MiniLM-L6-v2` sentence embeddings + logistic regression (C tuned the same way).
+  - Unmasked TF-IDF (the masking test).
+  - A keyword-lexicon baseline.
+- **Uncertainty:** 1,000-resample bootstrap 95% CIs on macro-F1 (overall and per subgroup), and a paired bootstrap for model-vs-model differences. For year-over-year shifts, passages are resampled within each report, and a shift counts only if its interval excludes zero.
+- **Specificity:** a rule-based 0–5 score per passage, with spaCy NER cached to disk:
+  - **Quantities:** +1, or +2 for three or more.
+  - **Date or deadline:** +1.
+  - **Named initiative or brand:** +1 (spaCy NER, "Project X", quoted names; the company's own name and governance bodies are excluded).
+  - **Commitment language:** +1 ("will", "target", "aim to", "by FY27").
+  - **Tiers:** 0–1 Vague, 2 Moderate, 3+ Specific.
+  - **Spot-checks** (by the AI assistant, not a person; `docs/specificity_spotcheck.csv`): 26/30 tiers agreed on 30 random passages, and 22/30 on a second sample of 10 strategic passages per tier (48/60 overall). The misses in the second sample run both ways (4 too high: "targeted" and "commitment to…" fire the commitment rule, "2.0" counts as a quantity; 4 too low), and no recalibrated rule beat the current one on both samples, so the thresholds were kept. Each evidence passage now shows which signals fired (e.g. "2 numbers · date · named: Vatika").
+- **LLM layer:** Gemini (`gemini-3.5-flash`, temperature 0.2), used for two things only:
+  - **Report prose:** it rewrites the narrative of a strategy brief from a JSON of computed figures.
+  - **Ask the reports:** it answers questions from retrieved passages. Retrieval searches the unmasked text of every passage (strategy and Other) across all years by default. It is hybrid: BM25 over words and two-word phrases (so "quick commerce" is matched exactly) and MiniLM embedding cosine, fused by reciprocal rank fusion into a 0–1 relevance score shown per source. A passage is eligible only if its embedding cosine clears 0.40 (on-topic queries scored 0.56–0.67, off-topic ones at most 0.36), it contains a two-word phrase from the question, or it contains most of the question's content words; if none is eligible the app refuses. A question that names a company is restricted to that company.
+  - **Spelling:** prompts ask for Indian English (British) spelling. One-year reports always say "Only one year available" rather than describing a comparison that cannot exist.
+  - **Guardrails:** prompts forbid numbers or claims not in the data, and the model must cite passages or reply "NOT_IN_PASSAGES". Numbers in generated report text are checked against the figures; any section that fails falls back to template text.
+  - **Fallback:** with no key, or on an API error, everything still works from templates.
+- **App:** Streamlit with seven pages. Analysis: Overview · Briefs · Ask. Data: Upload. Model: How it works · Evaluation · Model card. *How it works* draws the pipeline and has an inspector that runs any sentence through cleaning, masking, TF-IDF, the classifier, the confidence flag and the specificity rules. The app loads saved artefacts and never retrains.
 
 ## 5. Results
-**Held-out test set (n = 177):** macro-F1 **0.78** (accuracy 0.81) versus **0.49** for the keyword baseline. Per-class F1 ranges from 0.69 (DIST) to 0.87 (OTHER). The review flag catches 15% of test passages, where accuracy drops to 52%, against 87% for unflagged passages. A stricter cross-year test (train FY2025, test FY2026 including unseen Nestlé) gives macro-F1 0.71.
+**Model comparison (held-out n = 177; macro-F1 with 95% CI):**
 
-**Audit.** Subgroup analysis shows the clearest weakness in **writing style**: macro-F1 is 0.59 on Chairman/CEO letters (n = 46) against 0.79 on MD&A (n = 131). Passage length makes no difference (0.75 vs 0.75). Nestlé (n = 25) is too small to conclude. The most common error is BRAND → OTHER. Error analysis attributes most mistakes to genuine overlap (influencer-led brand building, consumer trends vs macro commentary) and to rhetorical letter prose.
+| System | Accuracy | Macro-F1 | 95% CI |
+|---|---|---|---|
+| TF-IDF + LR, masked (main) | 0.81 | **0.77** | 0.69–0.84 |
+| MiniLM embeddings + LR, masked | 0.79 | 0.77 | 0.69–0.83 |
+| TF-IDF + LR, unmasked | 0.81 | 0.78 | 0.69–0.84 |
+| Keyword baseline | 0.49 | 0.49 | 0.41–0.55 |
 
-**Benchmark (disclosure emphasis).**
-- **Dabur:** its narrative is the most brand- and product-led (BRAND 37%/35%, PROD 30%/27% in FY2025/FY2026). Digital is its largest shift, +7.6 pp (6% → 14%).
-- **HUL:** spreads emphasis evenly across all six themes, and gives sustainability far more space (14–17%) than Dabur or Nestlé (4–5%).
-- **Nestlé FY2026:** distribution and product account for 26% each.
+- **Embeddings vs TF-IDF:** embeddings differ by −0.01 (paired CI −0.07 to +0.06). The scores are effectively equal, so TF-IDF stays the main model because its decisions can be explained term by term.
+- **Masking test:**
+  - **Accuracy:** masking changes macro-F1 by −0.00 (paired CI −0.05 to +0.04).
+  - **Company probe:** a company-identification classifier still reaches 79% on masked text (82% unmasked; majority guess 49%). Names are not what makes a passage identifiable; house style and topics are.
+- **Confidence flag:** flags 21% of test passages (37 of 177; 113 of 1,184 corpus passages). Accuracy is 89% above the 0.45 threshold and 49% below it.
+- **Cross-year check:** trained on FY2025 and tested on FY2026 (including unseen Nestlé), macro-F1 is 0.71.
 
-These are differences in what the companies write about, not in what they do.
+**Audit (key finding):**
+- **Masking and house style:** masking names, brands and numbers does not change theme accuracy (paired CI −0.05 to +0.04), but company identity is still 79% predictable from masked text (majority guess 49%). House style may therefore confound cross-company comparisons.
+- **Direction of errors:** the largest group of errors (15 of 34) is strategy passages predicted as Other; the reverse happens 7 times. Strategy passages are missed more often than invented, so theme shares are likely conservative.
+- **Company:** the only subgroup gap that survives bootstrap intervals is Nestlé India, at macro-F1 0.44 (CI 0.23–0.58) against 0.82 (0.67–0.91) for HUL. This rests on n = 25 Nestlé test passages and one year of data, so it is indicative only.
+- **Writing style:** the v1 finding that the model is "much weaker on Chairman's letters" (0.59 vs 0.79 then) does not hold up. With masking and CIs, letters score 0.75 (0.45–0.86) and MD&A 0.77 (0.67–0.86), which is within noise. Macro-F1 over seven classes on 46 passages is too unstable to support that claim.
+- **Most common single confusion:** BRAND predicted as OTHER (4 of 26).
 
-**Limitations.**
-- The labels are AI-drafted and unverified, and a single annotator drew the theme boundaries.
-- The data is small (5 reports, test n per class 9–79), and a bag-of-words model misses intent and tense.
+**Benchmark findings (disclosure emphasis):**
+- **Dabur:** its narrative is brand-led (34–36% BRAND), and its writing is the most concrete of the three (39% of strategy passages carry concrete detail, vs 13% for HUL and 10% for Nestlé).
+- **YoY shifts:** the only shift that clears the noise is Dabur's digital & e-commerce, 6% → 14% (+8.0 pp, CI +1.9 to +14.1). Every other shift, including HUL's +4.3 pp on brand, is within noise.
+- **HUL:** its narrative is spread evenly across themes, and it gives sustainability about three times the space the others do.
+
+**Limitations:**
+- Labels were AI-drafted following the labelling guidelines and have not been human-verified.
+- House style: company identity is 79% predictable after masking, so cross-company differences may partly reflect writing style.
+- The data is small: 5 reports, with test n per class of 9–79.
+- Bag of words misses intent and tense.
+- Specificity counts brand mentions, which flatters brand-by-brand reporting.
 - About 60% of benchmark passages were seen in training.
-- Year-over-year shifts of a few points are within the noise of 61–195 strategic passages per report.
+- Year-over-year intervals ignore labelling error.
+
+## 6. LLM layer design
+The classifier remains the NLP core: every label and every number comes from the trained model and the bootstrap. Gemini is an optional writing layer behind a small `LLMClient` interface (only Gemini is implemented), with all prompts in `stratlens/llm/prompts.py`.
+
+- **Guardrails:**
+  - Grounding instructions in every prompt.
+  - JSON output for report sections.
+  - Automatic number checking, with template fallback per section.
+  - Mandatory citations, and an explicit "not in passages" refusal.
+  - Visible "AI-generated from cited passages" labels.
+- **Operations:** low temperature, a 45 s timeout, two retries on 429/503 with friendly messages, and an on-disk cache so demos are repeatable and free.

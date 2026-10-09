@@ -29,7 +29,8 @@ def global_terms(model: Pipeline, k: int = 15) -> dict[str, list[dict]]:
 def explain(model: Pipeline, text: str, k: int = 10) -> dict:
     """Class probabilities plus the terms pushing toward / away from the predicted class."""
     vec, clf = _parts(model)
-    x = vec.transform([text])
+    pre = model.named_steps.get("mask")
+    x = vec.transform(pre.transform([text]) if pre is not None else [text])
     proba = model.predict_proba([text])[0]
     order = np.argsort(proba)[::-1]
     pred_i = int(order[0])
@@ -53,6 +54,8 @@ def highlight_spans(text: str, terms: list[str]) -> list[tuple[int, int]]:
     """Character spans in `text` matching the given (possibly bigram) terms, case-insensitive, non-overlapping."""
     spans = []
     for term in sorted(set(terms), key=len, reverse=True):
+        if "__" in term:  # masking placeholders (__brand__, __num__) have no literal span in the original text
+            continue
         words = [re.escape(w) for w in term.split()]
         pat = re.compile(r"\b" + r"[\s\W]+".join(words) + r"\b", re.I)
         for m in pat.finditer(text):
