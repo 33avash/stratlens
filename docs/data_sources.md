@@ -27,8 +27,8 @@ Report-specific notes:
 
 - **Britannia** publishes no Chairman/CEO letter in either year; only its MD&A is read.
 - **Godrej Consumer Products** integrates its MD&A into the integrated report (printed pp. 48–223 in FY2026).
-  StratLens reads the business model and risk sections and Strategic Pillars 1–2 (category development; funded by
-  radical simplification). The TCFD climate report and Pillar 3 (people and planet: HR, CSR, human rights and
-  environmental data) are excluded, because other companies cover those in the separate BRSR, which StratLens does
-  not read. The "letter" for Godrej is the Executive Chairperson's letter plus the MD & CEO interview.
+  StratLens reads the business model and risk sections and all three Strategic Pillars (category development;
+  funded by radical simplification; people and planet). Only the TCFD climate report is excluded. Pillar 3 covers
+  HR, CSR, human rights and environmental data that other companies put in their separate BRSR (not read), so
+  Godrej's sustainability share is not like-for-like with its peers. The "letter" for Godrej is the Executive Chairperson's letter plus the MD & CEO interview.
 - **Nestlé India** embeds its MD&A in the Board's Report; the business narrative and the risks / MD&A pages are read.

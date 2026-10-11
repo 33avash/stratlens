@@ -1,7 +1,7 @@
 {
  "file": "godrej_FY2026.pdf",
  "page_count": 580,
- "pages_kept": 110,
+ "pages_kept": 176,
  "sections": [
   {
    "section": "LETTER",
@@ -24,16 +24,16 @@
   {
    "section": "MDA",
    "start_page": 81,
-   "end_page": 159,
-   "n_pages": 79,
+   "end_page": 225,
+   "n_pages": 145,
    "method": "override",
-   "chars": 119629,
+   "chars": 227915,
    "starts_with": "Category develop existing portfolio 80 Funded by radical simpliﬁcation 112 Peopl"
   }
  ],
- "n_dropped": 651,
+ "n_dropped": 986,
  "company": "GODREJ",
  "year": "FY2026",
- "n_passages": 639,
+ "n_passages": 1031,
  "built": "2026-10-11"
 }

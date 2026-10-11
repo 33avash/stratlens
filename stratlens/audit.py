@@ -1,4 +1,6 @@
-"""Audit metrics: overall, per-class, subgroup, threshold analysis and the key finding."""
+"""Audit metrics: overall, per-class, subgroup, threshold analysis and the key finding.
+
+Run as `python -m stratlens.audit` for the human-label audit (stratlens/human_audit.py)."""
 from __future__ import annotations
 
 import numpy as np
@@ -189,3 +191,10 @@ def key_findings(m: dict) -> list[tuple[str, str]]:
                     f"{_name(lo['group'])} scores macro-F1 {lo['macro_f1']:.2f}{_ci(lo)} against "
                     f"{hi['macro_f1']:.2f}{_ci(hi)} for {_name(hi['group'])}{small}."))
     return out
+
+
+if __name__ == "__main__":  # python -m stratlens.audit [--export | --partial]: human audit (see human_audit.py)
+    import sys
+
+    from .human_audit import main
+    sys.exit(main())

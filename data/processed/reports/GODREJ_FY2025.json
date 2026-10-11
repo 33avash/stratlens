@@ -1,7 +1,7 @@
 {
  "file": "godrej_FY2025.pdf",
  "page_count": 597,
- "pages_kept": 131,
+ "pages_kept": 196,
  "sections": [
   {
    "section": "LETTER",
@@ -24,16 +24,16 @@
   {
    "section": "MDA",
    "start_page": 96,
-   "end_page": 180,
-   "n_pages": 85,
+   "end_page": 245,
+   "n_pages": 150,
    "method": "override",
-   "chars": 125163,
+   "chars": 229717,
    "starts_with": "1 Category develop existing portfolio"
   }
  ],
- "n_dropped": 2666,
+ "n_dropped": 4034,
  "company": "GODREJ",
  "year": "FY2025",
- "n_passages": 675,
+ "n_passages": 1014,
  "built": "2026-10-11"
 }
