@@ -1,0 +1,30 @@
+{
+ "file": "HUL_FY2026.pdf",
+ "page_count": 244,
+ "pages_kept": 7,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 9,
+   "end_page": 10,
+   "n_pages": 2,
+   "method": "override",
+   "chars": 14655,
+   "starts_with": "Chairman's Statement Our contribution extends well beyond the products we sell. "
+  },
+  {
+   "section": "MDA",
+   "start_page": 43,
+   "end_page": 47,
+   "n_pages": 5,
+   "method": "override",
+   "chars": 42026,
+   "starts_with": "Report of the Board of Directors and Management Discussion & Analysis Your Board"
+  }
+ ],
+ "n_dropped": 78,
+ "company": "HUL",
+ "year": "FY2026",
+ "n_passages": 189,
+ "built": "2026-10-11"
+}

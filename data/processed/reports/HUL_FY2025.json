@@ -1,0 +1,30 @@
+{
+ "file": "HUL_FY2025.pdf",
+ "page_count": 468,
+ "pages_kept": 16,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 24,
+   "end_page": 27,
+   "n_pages": 4,
+   "method": "override",
+   "chars": 15455,
+   "starts_with": "Chairman's Statement Dear Shareholders, In the financial year 2024-25, the busin"
+  },
+  {
+   "section": "MDA",
+   "start_page": 108,
+   "end_page": 119,
+   "n_pages": 12,
+   "method": "override",
+   "chars": 55362,
+   "starts_with": "106 HINDUSTAN UNILEVER LIMITED About HUL Hindustan Unilever Limited (HUL) is Ind"
+  }
+ ],
+ "n_dropped": 55,
+ "company": "HUL",
+ "year": "FY2025",
+ "n_passages": 254,
+ "built": "2026-10-11"
+}

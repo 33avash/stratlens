@@ -1,0 +1,68 @@
+# Companies StratLens knows about. Report files in data/raw are named {slug}_FY{yyyy}.pdf (any case);
+# the code is the upper-cased slug and is used in passage ids.
+# peer_group: companies in the same group are each other's natural peers (Company page benchmark).
+# color: low-chroma neutral; hue is reserved for themes, so a company colour never looks like a theme.
+# aliases: lower-case names that identify the company in an Ask question.
+
+companies:
+  - code: DABUR
+    slug: dabur
+    name: Dabur India
+    short: Dabur
+    segment: Personal care & Ayurveda
+    peer_group: personal_care
+    color: "#BCAE92"
+    aliases: [dabur]
+
+  - code: MARICO
+    slug: marico
+    name: Marico
+    short: Marico
+    segment: Personal care
+    peer_group: personal_care
+    color: "#9C8F78"
+    aliases: [marico]
+
+  - code: HUL
+    slug: hul
+    name: Hindustan Unilever
+    short: HUL
+    segment: Home & personal care
+    peer_group: home_personal_care
+    color: "#A7AEAA"
+    aliases: [hul, hindustan unilever, unilever]
+
+  - code: GODREJ
+    slug: godrej
+    name: Godrej Consumer Products
+    short: Godrej
+    segment: Home & personal care
+    peer_group: home_personal_care
+    color: "#878F8B"
+    aliases: [godrej, gcpl, godrej consumer]
+
+  - code: NESTLE
+    slug: nestle
+    name: Nestlé India
+    short: Nestlé
+    segment: Foods
+    peer_group: foods
+    color: "#7E8994"
+    aliases: [nestlé, nestle]
+
+  - code: BRITANNIA
+    slug: britannia
+    name: Britannia Industries
+    short: Britannia
+    segment: Foods
+    peer_group: foods
+    color: "#A3ABB5"
+    aliases: [britannia]
+
+peer_groups:
+  personal_care: Personal care
+  home_personal_care: Home & personal care
+  foods: Foods
+
+# Years the app expects for every company; a missing report is shown as missing, never filled in.
+years: [FY2025, FY2026]

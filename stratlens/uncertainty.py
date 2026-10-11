@@ -67,3 +67,19 @@ def yoy_ci(preds: pd.DataFrame, yoy: pd.DataFrame, label_col: str = "pred", n: i
     res = pd.concat(out, ignore_index=True)
     res["significant"] = (res["ci_lo"] > 0) | (res["ci_hi"] < 0)
     return res
+
+
+def report_seed(company: str, year: str, seed: int = SEED) -> int:
+    """Stable per-report seed, so a report's bootstrap samples are the same wherever they are used."""
+    return seed + sum(ord(ch) * (i + 1) for i, ch in enumerate(f"{company}|{year}"))
+
+
+def report_share_samples(labels, company: str, year: str, n: int = N_BOOT) -> np.ndarray:
+    """(n, 6) bootstrap shares of one report's strategic passages, resampling its passages."""
+    return _share_samples(np.asarray(labels), n, np.random.default_rng(report_seed(company, year)))
+
+
+def diff_ci(samples_a: np.ndarray, samples_b: np.ndarray, alpha: float = 0.05) -> tuple[np.ndarray, np.ndarray]:
+    """95% interval of share(B) - share(A) in percentage points, per strategic theme."""
+    lo, hi = np.quantile((samples_b - samples_a) * 100, [alpha / 2, 1 - alpha / 2], axis=0)
+    return lo, hi

@@ -1,0 +1,30 @@
+{
+ "file": "DABUR_FY2026.pdf",
+ "page_count": 623,
+ "pages_kept": 31,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 28,
+   "end_page": 30,
+   "n_pages": 3,
+   "method": "override",
+   "chars": 8123,
+   "starts_with": "Dear Shareholders, This past year has been a reminder of how quickly the world c"
+  },
+  {
+   "section": "MDA",
+   "start_page": 174,
+   "end_page": 201,
+   "n_pages": 28,
+   "method": "override",
+   "chars": 90811,
+   "starts_with": "Global Economy The global economy in FY 2025–26 was relatively stable before the"
+  }
+ ],
+ "n_dropped": 144,
+ "company": "DABUR",
+ "year": "FY2026",
+ "n_passages": 322,
+ "built": "2026-10-11"
+}

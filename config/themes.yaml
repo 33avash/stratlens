@@ -1,0 +1,31 @@
+# Theme taxonomy. Order is the display order. One fixed colour per theme, used by every chart.
+# OTHER is the non-strategy class; shares are computed over the six strategy themes only.
+themes:
+  - code: PROD
+    name: Product innovation & portfolio
+    short: Product
+    color: "#3F66A6"
+  - code: DIST
+    name: Market expansion & distribution
+    short: Distribution
+    color: "#2FB0A2"
+  - code: DIGI
+    name: Digital & e-commerce
+    short: Digital
+    color: "#8C78D2"
+  - code: OPS
+    name: Operations & supply chain
+    short: Operations
+    color: "#D9A23A"
+  - code: SUST
+    name: Sustainability & sourcing
+    short: Sustainability
+    color: "#4E8A2A"
+  - code: BRAND
+    name: Consumer & brand strategy
+    short: Brand
+    color: "#B8427F"
+  - code: OTHER
+    name: Other / unclear
+    short: Other
+    color: "#8E9893"

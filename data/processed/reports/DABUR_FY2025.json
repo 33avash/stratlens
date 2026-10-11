@@ -1,0 +1,30 @@
+{
+ "file": "DABUR_FY2025.pdf",
+ "page_count": 451,
+ "pages_kept": 25,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 19,
+   "end_page": 21,
+   "n_pages": 3,
+   "method": "override",
+   "chars": 6804,
+   "starts_with": "CHAIRMAN’S MESSAGE DEAR SHAREHOLDERS, It gives me great pleasure to present to y"
+  },
+  {
+   "section": "MDA",
+   "start_page": 130,
+   "end_page": 151,
+   "n_pages": 22,
+   "method": "override",
+   "chars": 74793,
+   "starts_with": "Corporate Overview Board & Management Reports Financial Statements Dabur India L"
+  }
+ ],
+ "n_dropped": 135,
+ "company": "DABUR",
+ "year": "FY2025",
+ "n_passages": 275,
+ "built": "2026-10-11"
+}

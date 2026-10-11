@@ -1,6 +1,8 @@
 """Central configuration: paths, taxonomy, seeds and thresholds."""
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 RAW = DATA / "raw"
@@ -21,7 +23,12 @@ TEST_CSV = SPLITS / "test.csv"
 MODEL_PATH = MODELS / "classifier.joblib"
 METRICS_JSON = REPORTS / "metrics.json"
 ERROR_NOTES_CSV = REPORTS / "error_notes.csv"
-BENCHMARK_CSV = PROCESSED / "benchmark_predictions.csv"
+REPORTS_DIR = PROCESSED / "reports"          # one CSV + JSON per report (python -m stratlens.build)
+PASSAGES_CSV = PROCESSED / "passages.csv"     # every report, classified and scored: what the app reads
+BENCHMARK_CSV = PASSAGES_CSV
+EMBEDDINGS_NPZ = PROCESSED / "embeddings.npz"  # MiniLM vectors aligned to passage_id
+ANALYTICS_JSON = PROCESSED / "analytics.json"
+MANIFEST_JSON = PROCESSED / "manifest.json"
 MODEL_CARD = ROOT / "MODEL_CARD.md"
 
 SEED = 42
@@ -31,19 +38,40 @@ MIN_WORDS = 8
 MAX_WORDS = 70
 SMALL_N = 30
 
-THEMES = ["PROD", "DIST", "DIGI", "OPS", "SUST", "BRAND", "OTHER"]
-THEME_NAMES = {
-    "PROD": "Product innovation & portfolio",
-    "DIST": "Market expansion & distribution",
-    "DIGI": "Digital & e-commerce",
-    "OPS": "Operations & supply chain",
-    "SUST": "Sustainability & sourcing",
-    "BRAND": "Consumer & brand strategy",
-    "OTHER": "Other / unclear",
-}
+COMPANIES_YAML = CONFIG_DIR / "companies.yaml"
+THEMES_YAML = CONFIG_DIR / "themes.yaml"
+GAZETTEER_YAML = CONFIG_DIR / "gazetteer.yaml"
+
+
+def _yaml(path: Path) -> dict:
+    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+# ---- themes (config/themes.yaml)
+_themes = _yaml(THEMES_YAML)["themes"]
+THEMES = [t["code"] for t in _themes]
+THEME_NAMES = {t["code"]: t["name"] for t in _themes}
+THEME_SHORT = {t["code"]: t["short"] for t in _themes}
+THEME_COLORS = {t["code"]: t["color"] for t in _themes}
 STRATEGIC_THEMES = [t for t in THEMES if t != "OTHER"]
 
-COMPANY_NAMES = {"HUL": "Hindustan Unilever", "DABUR": "Dabur India", "NESTLE": "Nestlé India"}
+# ---- companies (config/companies.yaml)
+_companies = _yaml(COMPANIES_YAML)
+COMPANIES = {c["code"]: c for c in _companies["companies"]}
+COMPANY_NAMES = {k: c["name"] for k, c in COMPANIES.items()}
+COMPANY_SHORT = {k: c["short"] for k, c in COMPANIES.items()}
+COMPANY_COLORS = {k: c["color"] for k, c in COMPANIES.items()}
+COMPANY_ALIASES = {k: c.get("aliases", [k.lower()]) for k, c in COMPANIES.items()}
+PEER_GROUPS = _companies.get("peer_groups", {})
+EXPECTED_YEARS = _companies.get("years", [])
+
+
+def peers_of(code: str) -> list[str]:
+    """Other companies in the same peer group (empty for an unknown company)."""
+    group = COMPANIES.get(code, {}).get("peer_group")
+    return [k for k, c in COMPANIES.items() if k != code and group and c.get("peer_group") == group]
+
+
 SECTION_NAMES = {"LETTER": "Chairman/CEO letter", "MDA": "MD&A"}
 
 # Plain names for the systems in metrics.json (technique in brackets).

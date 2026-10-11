@@ -14,14 +14,11 @@ GRID = "rgba(124,135,129,0.18)"
 SANS = "Geist, Inter, 'Segoe UI', system-ui, sans-serif"
 MONO = "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
 
-# Theme hues (always shown next to their name).
-THEME_COLORS = {"PROD": "#3F66A6", "DIST": "#2FB0A2", "DIGI": "#8C78D2", "OPS": "#D9A23A",
-                "SUST": "#4E8A2A", "BRAND": "#B8427F", "OTHER": "#8E9893"}
-# Companies never reuse a theme hue: colour always means theme. Companies get low-chroma neutrals
-# (grey / sand / slate), shown together with their initials, so they read on white and on near-black.
-COMPANY_COLORS = {"HUL": "#A7AEAA", "DABUR": "#BCAE92", "NESTLE": "#7E8994"}
+# Theme hues (always shown next to their name) and company neutrals come from config/*.yaml.
+# Companies never reuse a theme hue: colour always means theme. Companies get low-chroma neutrals,
+# shown together with their short name, so they read on white and on near-black.
+from .config import COMPANY_COLORS, COMPANY_SHORT, THEME_COLORS  # noqa: E402
 FALLBACK_COMPANY_COLORS = ["#C9C4BA", "#8F8A82", "#B4B9BD"]
-COMPANY_INITIALS = {"HUL": "HUL", "DABUR": "DAB", "NESTLE": "NES"}
 
 SEQ_LIGHT = [[0.0, "#F1F4F1"], [0.3, "#CDE7D7"], [0.6, "#76C495"], [0.85, "#2C9D5B"], [1.0, "#146B3A"]]
 SEQ_DARK = [[0.0, "#18201C"], [0.3, "#1D3A2A"], [0.6, "#24683F"], [0.85, "#2F9A5A"], [1.0, "#5BD08A"]]
@@ -50,7 +47,7 @@ def company_color(code: str, i: int = 0) -> str:
 
 
 def company_initials(code: str) -> str:
-    return COMPANY_INITIALS.get(code, code[:3].upper())
+    return COMPANY_SHORT.get(code, code[:3].upper())
 
 
 def tint(hex_color: str, alpha: float = 0.15) -> str:

@@ -1,0 +1,27 @@
+{
+ "DABUR_FY2025": {
+  "segment_key": "b3ba069bf429644d149f7cd6e4ad034d",
+  "predict_key": "710d1457d024a1f170e4acd438654620",
+  "built": "2026-10-11"
+ },
+ "DABUR_FY2026": {
+  "segment_key": "8ab9cefd5a30b1d76e51ebd0f77f0d97",
+  "predict_key": "b2baf6fd9de9eb539afb7ef3b80daa1c",
+  "built": "2026-10-11"
+ },
+ "HUL_FY2025": {
+  "segment_key": "3dd34c8f242b8d8c89f8dc225894dd79",
+  "predict_key": "2336ed71a2c62717629e6ef1accbb1aa",
+  "built": "2026-10-11"
+ },
+ "HUL_FY2026": {
+  "segment_key": "166dc89eab2586711c834fd7cbb66f0c",
+  "predict_key": "fdb6cd020840cfc30a92beab96bfce38",
+  "built": "2026-10-11"
+ },
+ "NESTLE_FY2026": {
+  "segment_key": "431d40ee06b2cb3ec2d641a0afd649bf",
+  "predict_key": "d2dfa75c25ffa3e6583e7ab17448e086",
+  "built": "2026-10-11"
+ }
+}

@@ -1,0 +1,295 @@
+# Name masking gazetteer. Every term is replaced before TF-IDF (company -> __company__, brand -> __brand__),
+# so the classifier learns themes, not authorship. Matching is case-sensitive and whole-word.
+# Ambiguous everyday words (Real, Red, Treat, Magic, Expert, Fab, Renew, Bourbon) are listed only inside a
+# multi-word brand. Brands for MARICO, BRITANNIA and GODREJ were drafted for review: check them against the PDFs.
+# Signature phrases (Company page) also drop every term listed here.
+company_terms:
+  HUL:
+  - Hindustan Unilever Limited
+  - Hindustan Unilever
+  - Unilever
+  - HUL
+  DABUR:
+  - Dabur India Limited
+  - Dabur India
+  - Dabur
+  - H & B Stores Limited
+  - Hobi Group
+  - Hobi Kozmetik
+  - Namaste Laboratories LLC
+  - Namaste Laboratories
+  NESTLE:
+  - Nestlé India Limited
+  - Nestle India Limited
+  - Nestlé India
+  - Nestle India
+  - Nestlé S.A.
+  - Nestle S.A.
+  - Nestlé
+  - Nestle
+  MARICO:
+  - Marico Limited
+  - Marico
+  BRITANNIA:
+  - Britannia Industries Limited
+  - Britannia Industries
+  - Britannia Bel Foods
+  - Britannia
+  GODREJ:
+  - Godrej Consumer Products Limited
+  - Godrej Consumer Products
+  - Godrej Consumer
+  - GCPL
+  - Godrej Industries
+  - Godrej Group
+  - Godrej Africa
+  - Godrej Indonesia
+  - Raymond Consumer Care
+  - Godrej
+brands:
+  HUL:
+  - Surf excel
+  - Surf Excel
+  - Rin
+  - Vim
+  - Wheel
+  - Comfort fabric
+  - Domex
+  - Lux
+  - Lifebuoy
+  - Dove
+  - Pears
+  - Closeup
+  - Pepsodent
+  - Vaseline
+  - Pond's
+  - Ponds
+  - Lakmē
+  - Lakme
+  - Glow & Lovely
+  - Glow and Lovely
+  - TRESemmé
+  - TRESemme
+  - Sunsilk
+  - Clinic Plus
+  - Nexxus
+  - Minimalist
+  - OZiva
+  - Liquid I.V.
+  - Liquid IV
+  - Pureit
+  - Pukka
+  - Brooke Bond
+  - Red Label
+  - Taj Mahal
+  - Bru
+  - Knorr
+  - Kissan
+  - Hellmann's
+  - Hellman's
+  - Horlicks
+  - Boost
+  - Kwality Wall's
+  - Magnum
+  - Cornetto
+  - Simple skincare
+  - Shakti
+  - Prabhat
+  - Shikhar
+  - Samadhan
+  - Sangam
+  - Suvidha
+  - Axe
+  - Rexona
+  - Indulekha
+  - Sunlight
+  - Cif
+  - Stratos
+  DABUR:
+  - Dabur Red Paste
+  - Dabur Red
+  - Dabur Amla
+  - Dabur Honey
+  - Dabur Glucose
+  - Dabur Chyawanprash
+  - Chyawanprakash
+  - Chyawanshakti
+  - ChyawanShakti
+  - Ratnaprash
+  - Vatika
+  - Meswak
+  - Miswak
+  - Babool
+  - Odonil
+  - Odomos
+  - Sanifresh
+  - Hajmola
+  - Pudin Hara
+  - Honitus
+  - Réal Activ
+  - Real Activ
+  - Réal
+  - Real Fizzin
+  - Real Bites
+  - Réal Bites
+  - Real Cheers
+  - Hommade
+  - Badshah
+  - Gulabari
+  - Fem
+  - FEM
+  - OxyLife
+  - Siens
+  - Lal Tail
+  - Lal Gold
+  - Janma Ghunti
+  - Shilajit
+  - Hobby
+  - Hobi
+  - Namaste
+  - ORS
+  - NewU
+  - Long & Lasting
+  - Herb'l
+  - Herb’l
+  - Herbolene
+  - Sesa
+  - Cool King
+  - Hingoli
+  - Nature Care
+  - Sat Isabgol
+  - Khajurprash
+  - Jaquline
+  - Botanica
+  - London Notes
+  - Dant Snan
+  - Samriddhi
+  - Saksham
+  - Yoddha
+  - Gurukool
+  - Drishti
+  - RAS Beauty
+  - Dabur Ventures
+  - Dermazone
+  - Red Paste
+  - Red Toothpaste
+  - Hammam Zaith
+  - Chyawanprash
+  - Herb’l Kids
+  - Swarnaprashan
+  NESTLE:
+  - MAGGI
+  - Maggi
+  - KITKAT
+  - KitKat
+  - Kitkat
+  - NESCAFÉ
+  - NESCAFE
+  - Nescafé
+  - Nescafe
+  - MILKMAID
+  - Milkmaid
+  - MILKYBAR
+  - Milkybar
+  - MUNCH
+  - Munch
+  - CERELAC
+  - Cerelac
+  - NAN
+  - Lactogen
+  - Purina
+  - NESPRESSO
+  - Nespresso
+  - Everyday Dairy Whitener
+  - a+
+  - Polo
+  - BAR-ONE
+  - Bar-One
+  - Nestlé Professional
+  - Nestle Professional
+  - NesMitra
+  - AskNestlé
+  - AskNestle
+  - Retail ONE
+  - Jigyasa
+  - Duo Gusto
+  - ExcellaPro
+  - Masala-Ae-Magic
+  - Masala‑Ae‑Magic
+  MARICO:
+  - Parachute Advansed
+  - Parachute
+  - Saffola FITTIFY
+  - Saffola Masala Oats
+  - Saffola Oats
+  - Saffola
+  - Set Wet
+  - Livon
+  - Nihar Naturals
+  - Nihar Shanti Amla
+  - Nihar
+  - Hair & Care
+  - Mediker
+  - Beardo
+  - Just Herbs
+  - Plix
+  - Pure Sense
+  - True Elements
+  - Coco Soul
+  - Kaya
+  - X-Men
+  - Isoplus
+  - Code 10
+  BRITANNIA:
+  - Good Day
+  - Marie Gold
+  - NutriChoice
+  - Nutri Choice
+  - Milk Bikis
+  - Tiger
+  - 50-50
+  - Little Hearts
+  - Jim Jam
+  - Treat Croissant
+  - Pure Magic
+  - Nice Time
+  - Bourbon Bliss
+  - Winkin' Cow
+  - Winkin’ Cow
+  - Gobbles
+  - Toastea
+  - Maska Chaska
+  - The Laughing Cow
+  - Laughing Cow
+  - Biskafe
+  - Timepass
+  GODREJ:
+  - Good Knight
+  - Goodknight
+  - GoodKnight
+  - HIT
+  - Cinthol
+  - Ezee
+  - Protekt
+  - Expert Rich Crème
+  - Aer Matic
+  - Aer Pocket
+  - Aer Power Pocket
+  - Aer
+  - Genteel
+  - Park Avenue
+  - KamaSutra
+  - Kamasutra
+  - Magic Handwash
+  - Magic Bodywash
+  - Stella
+  - Mitu
+  - Tura
+  - NYU
+  - BBLUNT
+  - Bblunt
+  - Strength of Nature
+  - Soft & Free
+  - Inecto
+  - Renew Keratin
+  - Spic Fresh

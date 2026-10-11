@@ -1,0 +1,39 @@
+{
+ "file": "NESTLE_FY2026.pdf",
+ "page_count": 306,
+ "pages_kept": 9,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 7,
+   "end_page": 8,
+   "n_pages": 2,
+   "method": "override",
+   "chars": 12474,
+   "starts_with": "Chairman's Message \"Over the course of the year, we focused on the fundamentals,"
+  },
+  {
+   "section": "MDA",
+   "start_page": 34,
+   "end_page": 37,
+   "n_pages": 4,
+   "method": "override",
+   "chars": 21272,
+   "starts_with": "Material changes and Commitments There have been no material changes and commitm"
+  },
+  {
+   "section": "MDA",
+   "start_page": 42,
+   "end_page": 44,
+   "n_pages": 3,
+   "method": "override",
+   "chars": 15805,
+   "starts_with": "Directors, no element of risk was identified during the financial year ended 31s"
+  }
+ ],
+ "n_dropped": 52,
+ "company": "NESTLE",
+ "year": "FY2026",
+ "n_passages": 144,
+ "built": "2026-10-11"
+}

@@ -25,14 +25,13 @@ import pandas as pd
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 from .. import embeddings
+from ..config import COMPANY_ALIASES
 from ..masking import COMPANY_RE
 
 EMB_FLOOR = 0.40     # MiniLM cosine. Calibrated: on-topic queries score 0.56-0.67, off-topic ones at most 0.36
 LEX_COVERAGE = 0.6   # share of the question's content words a passage must contain to pass on keywords alone
 RRF_K = 60
 BM25_K1, BM25_B = 1.5, 0.75
-COMPANY_ALIASES = {"HUL": ["hul", "hindustan unilever", "unilever"], "DABUR": ["dabur"],
-                   "NESTLE": ["nestlé", "nestle"]}
 QUESTION_WORDS = {"how", "what", "why", "which", "who", "does", "did", "do", "say", "says", "talk", "talking",
                   "about", "company", "companies", "report", "reports", "mention", "mentions", "describe"}
 TOKEN_RE = re.compile(r"[a-z0-9]+")
