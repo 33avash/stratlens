@@ -139,3 +139,26 @@ def score_texts(texts: list[str], use_cache: bool = True) -> list[dict]:
         sc = score_from_signals(s)
         out.append({"specificity": sc, "spec_tier": tier(sc), "spec_signals": s})
     return out
+
+
+FULL_CACHE = DATA / "cache" / "ner_full.json"
+NUM_LABELS = {"DATE", "CARDINAL", "PERCENT", "MONEY", "QUANTITY"}
+
+
+def number_entities(texts: list[str]) -> list[list[list[str]]]:
+    """[[label, text], ...] of spaCy DATE / CARDINAL / PERCENT / MONEY / QUANTITY entities per text (for promises).
+    Cached on disk separately from the concreteness cache; empty lists when spaCy is unavailable."""
+    try:
+        cache = json.loads(FULL_CACHE.read_text(encoding="utf-8"))
+    except Exception:
+        cache = {}
+    missing = [t for t in dict.fromkeys(texts) if _key(t) not in cache]
+    nlp = _nlp()
+    if missing and nlp is not None:
+        for t, doc in zip(missing, nlp.pipe(missing, batch_size=64)):
+            cache[_key(t)] = [[e.label_, e.text] for e in doc.ents if e.label_ in NUM_LABELS]
+        try:
+            FULL_CACHE.write_text(json.dumps(cache), encoding="utf-8")
+        except OSError:
+            pass
+    return [cache.get(_key(t), []) for t in texts]

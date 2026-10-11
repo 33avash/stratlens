@@ -16,7 +16,7 @@ import streamlit.components.v1 as components
 from . import specificity, theme, trace
 from . import model as mdl
 from .config import (ANALYTICS_JSON, ASK_EXAMPLES_JSON, AUDIT_JSON, COMPANIES, COMPANY_NAMES, COMPANY_SHORT,
-                     EVIDENCE_MIN_CONFIDENCE, MAX_WORDS, METRICS_JSON, MODEL_PATH, NARRATIVES_JSON, PASSAGES_CSV,
+                     EMBEDDINGS_NPZ, EVIDENCE_MIN_CONFIDENCE, FEATURES_JSON, MAX_WORDS, METRICS_JSON, MODEL_PATH, NARRATIVES_JSON, PASSAGES_CSV,
                      PIPELINE_STEPS, RELIABILITY_F1, REVIEW_THRESHOLD, ROOT, SECTION_NAMES, SECTIONS_CSV,
                      STRATEGIC_THEMES, SYSTEM_NAMES, THEME_COLORS, THEME_NAMES)
 from .report import clean
@@ -78,6 +78,20 @@ def load_narratives() -> dict:
 @st.cache_data(show_spinner=False)
 def load_ask_examples() -> dict:
     return _json(ASK_EXAMPLES_JSON) or {}
+
+
+@st.cache_data(show_spinner=False)
+def load_features() -> dict:
+    return _json(FEATURES_JSON) or {"novelty": {}, "promises": {}, "follow_up": {}, "signature": {}}
+
+
+@st.cache_resource(show_spinner=False)
+def load_embeddings() -> dict:
+    import numpy as np
+    if not EMBEDDINGS_NPZ.exists():
+        return {}
+    z = np.load(EMBEDDINGS_NPZ, allow_pickle=False)
+    return dict(zip(z["passage_id"].tolist(), z["vecs"]))
 
 
 @st.cache_data(show_spinner=False)

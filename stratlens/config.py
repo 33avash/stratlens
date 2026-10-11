@@ -82,6 +82,7 @@ ASK_EXAMPLES = APP.get("ask_examples", [])
 NARRATIVES_JSON = DATA / "processed" / "narratives.json"
 ASK_EXAMPLES_JSON = DATA / "processed" / "ask_examples.json"
 AUDIT_JSON = DATA / "processed" / "audit.json"
+FEATURES_JSON = DATA / "processed" / "features.json"
 EVIDENCE_MIN_CONFIDENCE = 0.45   # passages below this are never shown as evidence
 RELIABILITY_F1 = 0.60            # below this per-company F1 the Company page shows a caution
 

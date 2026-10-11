@@ -6,7 +6,7 @@ import html
 import pandas as pd
 import streamlit as st
 
-from . import charts, insights, report, ui
+from . import charts, feature_views, insights, report, ui
 from .config import COMPANIES, PEER_GROUPS, STRATEGIC_THEMES, THEME_NAMES, peers_of
 from .llm import narrate
 from .llm.client import get_client
@@ -14,7 +14,7 @@ from .theme import PLOTLY_CONFIG
 
 
 def render(an: dict, passages: pd.DataFrame, company: str, year: str, focus: str | None = None,
-           narrative: dict | None = None, uid: str = "co", on_theme_click=None) -> None:
+           narrative: dict | None = None, uid: str = "co", on_theme_click=None, feats: dict | None = None) -> None:
     key = f"{company}|{year}"
     r = an["reports"][key]
     group = COMPANIES.get(company, {}).get("peer_group")
@@ -96,6 +96,19 @@ def render(an: dict, passages: pd.DataFrame, company: str, year: str, focus: str
         ui.meta(f"Peers: {peer_label or 'no peer report this year'}"
                 + (f" ({group_name.lower()})" if group_name and peer_label else "")
                 + f". All companies: the average of the {n_all} companies with a {year} report.")
+        conc = [f"{ui.short(company)} {r['concreteness']:.1f}"] if r.get("concreteness") is not None else []
+        if r.get("peer_avg") and r["peer_avg"].get("concreteness") is not None and peer_label:
+            conc.append(f"{peer_label} {r['peer_avg']['concreteness']:.1f}")
+        if r.get("all_avg") and r["all_avg"].get("concreteness") is not None:
+            conc.append(f"all companies {r['all_avg']['concreteness']:.1f}")
+        if conc:
+            ui.meta("How specific the strategy passages are (concreteness, 0–5): " + " · ".join(conc) + ".")
+
+    # ---------- 3-5. what's new, promises, signature phrases ----------
+    if feats is not None:
+        feature_views.whats_new(passages, feats, an, company, year, uid)
+        feature_views.promises(passages, feats, an, company, year, uid)
+        feature_views.signature(passages, feats, company, year, uid)
 
     # ---------- 6. evidence ----------
     with ui.card(f"{uid}_evidence", "Evidence", meta="the most typical passages per theme · low-confidence hidden"):

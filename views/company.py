@@ -48,4 +48,4 @@ def _focus(theme_code: str) -> None:
 
 
 company_view.render(an, passages, company, year, focus=focus, narrative=ui.load_narratives()["brief"].get(key),
-                    on_theme_click=_focus)
+                    on_theme_click=_focus, feats=ui.load_features())

@@ -7,7 +7,7 @@ import json
 import pandas as pd
 import streamlit as st
 
-from stratlens import analytics, company_view, explain, specificity, ui
+from stratlens import analytics, company_view, explain, features, specificity, ui
 from stratlens import model as mdl
 from stratlens.config import COMPANIES, PIPELINE_STEPS
 from stratlens.extract import ExtractionError, extract_bytes, parse_filename
@@ -154,7 +154,13 @@ if r.get("all_avg") and len(r["all_avg"]["companies"]) <= 1:  # no other report 
     r["all_avg"] = an["reports"][any_key]["all_avg"]
     ui.note(f"No other company has a {year} report here, so the averages are from {latest}.")
 
-company_view.render(an2, allp, company, year, uid="up")
+@st.cache_data(show_spinner=False, max_entries=4)
+def _feats(sig_, _allp: pd.DataFrame) -> dict:
+    return {"novelty": {}, "follow_up": {}, "promises": {key: features.promises(_allp, key)},
+            "signature": {year: features.signature(_allp, year)}}
+
+
+company_view.render(an2, allp, company, year, uid="up", feats=_feats(sig, allp))
 
 with st.expander("Inspect a passage step by step"):
     pick = st.selectbox("Passage", out.passage_id.tolist(),

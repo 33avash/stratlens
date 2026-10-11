@@ -3,7 +3,7 @@ import html
 
 import streamlit as st
 
-from stratlens import analytics, charts, insights, ui
+from stratlens import analytics, charts, feature_views, features, insights, ui
 from stratlens.config import COMPARE_PRESETS, STRATEGIC_THEMES, THEME_NAMES
 from stratlens.llm import narrate
 from stratlens.llm.client import get_client
@@ -85,6 +85,23 @@ with right:
         st.plotly_chart(charts.paired(va, vb, la, lb, rng=(0, 5)), use_container_width=True, config=PLOTLY_CONFIG)
         ui.meta("Concreteness counts figures, dates, named initiatives and commitments in a passage (0–5). "
                 "A blank bar means the report has no passages on that theme.")
+
+# ---------- only in A / only in B ----------
+@st.cache_data(show_spinner=False, max_entries=32)
+def _novelty(a_: str, b_: str) -> dict:
+    return features.novelty(passages, ui.load_embeddings(), a_, b_)
+
+
+nov = ui.load_features().get("novelty", {}).get(f"{a}~{b}")
+if nov is None and ui.load_embeddings():
+    with st.spinner("Matching passages by meaning…"):
+        nov = _novelty(a, b)
+if nov:
+    with ui.card("cmp_only", f"Topics only in one report: {nov['only_in_a']['n']} only in {la}, "
+                             f"{nov['only_in_b']['n']} only in {lb}",
+                 meta="strategy passages with no close counterpart in the other report"):
+        feature_views.novelty_columns(passages, nov, ("only_in_a", f"Only in {la}"), ("only_in_b", f"Only in {lb}"),
+                                      "cmp")
 
 # ---------- passages for a clicked theme ----------
 pts = (ev.selection.points if ev and ev.selection else []) or []

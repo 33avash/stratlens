@@ -200,3 +200,11 @@ a.sl-cite { font-family: var(--mono); color: var(--accent); font-size: 11px; tex
 @media (max-width: 1100px) { .sl-fcards { grid-template-columns: 1fr; } .sl-lim { grid-template-columns: 1fr; gap: 2px; } }
 .stMarkdown table.sl-fp th, .stMarkdown table.sl-fp td { border: 0 !important; }
 table.sl-table td.r, table.sl-table th.r { white-space: nowrap; }
+
+/* Phase 4: promises, signature phrases */
+table.sl-prom td.t { width: 58%; line-height: 1.45; vertical-align: top; }
+table.sl-prom td { vertical-align: top; }
+table.sl-prom td b { color: var(--accent); font-weight: 600; }
+.sl-sigs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 28px; }
+.sl-sig .h { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+@media (max-width: 1100px) { .sl-sigs { grid-template-columns: 1fr; } }

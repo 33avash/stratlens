@@ -45,7 +45,7 @@ def benchmark(rows: list[dict], company_label: str, peer_label: str | None) -> g
     theme.style(f, 70 + 62 * len(order), margin=dict(l=4, r=36, t=30, b=4))
     f.update_layout(barmode="group", bargap=0.28, bargroupgap=0.08, legend=dict(traceorder="reversed"))
     f.update_xaxes(ticksuffix="%", rangemode="tozero")
-    f.update_yaxes(showgrid=False, tickfont=dict(size=12))
+    f.update_yaxes(showgrid=False, tickfont=dict(size=12), type="category", categoryorder="array", categoryarray=y)
     return f
 
 
@@ -68,7 +68,7 @@ def diverging(diffs: dict, label_a: str, label_b: str) -> go.Figure:
     f.update_xaxes(range=[-lim, lim], ticksuffix="", zeroline=True, zerolinecolor=MUTED, zerolinewidth=1,
                    title_text=f"← more in {label_a}      points      more in {label_b} →",
                    title_font=dict(size=11.5, color=MUTED))
-    f.update_yaxes(showgrid=False, tickfont=dict(size=12))
+    f.update_yaxes(showgrid=False, tickfont=dict(size=12), type="category", categoryorder="array", categoryarray=y)
     return f
 
 
@@ -92,7 +92,7 @@ def paired(values_a: dict, values_b: dict, label_a: str, label_b: str, suffix: s
     f.update_layout(barmode="group", bargap=0.3, legend=dict(traceorder="reversed"))
     if rng:
         f.update_xaxes(range=list(rng))
-    f.update_yaxes(showgrid=False, tickfont=dict(size=12))
+    f.update_yaxes(showgrid=False, tickfont=dict(size=12), type="category", categoryorder="array", categoryarray=y)
     return f
 
 
