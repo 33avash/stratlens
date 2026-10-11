@@ -117,12 +117,27 @@ def findings(an: dict) -> list[dict]:
     if conc:
         top, code = max(conc)
         avg = sum(c for c, _ in conc) / len(conc)
-        out.append({"kind": "concrete", "title": f"{short(code)} backs its strategy with the most specifics",
+        out.append({"kind": "concrete", "title": f"{short(code)} writes the most concrete strategy",
                     "theme": None, "company": code, "year": year,
                     "detail": f"{pct(top)} of its {year} strategy passages name figures, dates, initiatives or "
                               f"commitments, against {pct(avg)} across all {len(conc)} companies.",
                     "link": f"company?company={code}&year={year}"})
     return out
+
+
+def fingerprint_title(an: dict, year: str) -> str:
+    """'Product innovation & portfolio leads at 3 of 6 companies in FY2026' (most common top theme)."""
+    tops = []
+    for k, r in an["reports"].items():
+        if k.endswith("|" + year):
+            tops.append(max(STRATEGIC_THEMES, key=lambda t: r["themes"][t]["share"]))
+    if not tops:
+        return "Strategy fingerprint"
+    best = max(set(tops), key=tops.count)
+    n = tops.count(best)
+    if n == 1:
+        return f"Each company leads on a different theme in {year}"
+    return f"{THEME_NAMES[best]} leads at {n} of {len(tops)} companies in {year}"
 
 
 # ---------------------------------------------------------------- Company brief
@@ -192,6 +207,6 @@ def compare_template(an: dict, a: str, b: str, diffs: dict) -> tuple[str, dict]:
     ca, cb = ra.get("concrete_pct"), rb.get("concrete_pct")
     if ca is not None and cb is not None and round(ca * 100) != round(cb * 100):
         more, less, hi, lo = (la, lb, ca, cb) if ca > cb else (lb, la, cb, ca)
-        s.append(f"{more} is more specific: {T.v(pct(hi))} of its strategy passages name figures, dates or "
+        s.append(f"{more} is more concrete: {T.v(pct(hi))} of its strategy passages name figures, dates or "
                  f"initiatives, against {T.v(pct(lo))} for {less}.")
     return " ".join(s), T.tokens

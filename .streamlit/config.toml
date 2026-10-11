@@ -1,11 +1,54 @@
 [theme]
-font = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap, sans-serif"
-headingFont = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap, sans-serif"
-codeFont = "Geist Mono:https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap, monospace"
+# Fonts are served from static/fonts (Geist, SIL Open Font License) so the app works offline.
+font = "Geist, sans-serif"
+headingFont = "Geist, sans-serif"
+codeFont = "Geist Mono, monospace"
 baseFontSize = 14
 baseRadius = "medium"
 showWidgetBorder = true
 primaryColor = "#1E9E55"
+
+[[theme.fontFaces]]
+family = "Geist"
+url = "app/static/fonts/geist-latin-400-normal.woff2"
+weight = 400
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Geist"
+url = "app/static/fonts/geist-latin-500-normal.woff2"
+weight = 500
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Geist"
+url = "app/static/fonts/geist-latin-600-normal.woff2"
+weight = 600
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Geist"
+url = "app/static/fonts/geist-latin-700-normal.woff2"
+weight = 700
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Geist Mono"
+url = "app/static/fonts/geist-mono-latin-400-normal.woff2"
+weight = 400
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Geist Mono"
+url = "app/static/fonts/geist-mono-latin-500-normal.woff2"
+weight = 500
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Geist Mono"
+url = "app/static/fonts/geist-mono-latin-600-normal.woff2"
+weight = 600
+style = "normal"
 
 [theme.light]
 backgroundColor = "#F2F3F1"
@@ -36,6 +79,7 @@ toolbarMode = "viewer"
 showSidebarNavigation = true
 
 [server]
+enableStaticServing = true
 maxUploadSize = 80
 runOnSave = false
 

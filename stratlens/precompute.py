@@ -52,20 +52,28 @@ def write_all(an: dict, passages: pd.DataFrame) -> dict:
     fstats = write_features(an, passages)
     client = get_client()
     nar = {"brief": {}, "compare": {}}
-    for key in an["reports"]:
-        tpl, tok = insights.brief_template(an, *key.split("|"))
-        text, source = narrate.narrate(tpl, tok, client)
-        nar["brief"][key] = {"text": text, "source": source}
-    for a, b in compare_pairs(an):
-        nar["compare"][f"{a}~{b}"] = compare_text(an, a, b, client)
-    NARRATIVES_JSON.write_text(json.dumps(nar, ensure_ascii=False, indent=1), encoding="utf-8")
-
     examples = {}
-    for q in ASK_EXAMPLES:
-        hits, method = retrieval.search(passages, q, k=8)
-        srcs = ask.sources(hits)
-        examples[q] = {"passage_ids": [s["passage_id"] for s in srcs], "method": method,
-                       "relevance": hits["relevance"].round(3).tolist(), **ask.answer(q, srcs, client)}
+    # Order = demo path first, so a daily API quota that runs out mid-build leaves only the least-seen texts as
+    # templates (they are filled in on a later `python -m stratlens.build --narratives`; cached ones cost nothing).
+    presets = [(p["a"], p["b"]) for p in COMPARE_PRESETS if p["a"] in an["reports"] and p["b"] in an["reports"]]
+    latest = max(an["years"])
+    briefs = sorted(an["reports"], key=lambda k: (k.split("|")[1] != latest, k))
+    tasks = ([("brief", presets[0][1])] if presets else []) + [("compare", presets[0])] * bool(presets) \
+        + [("ask", q) for q in ASK_EXAMPLES] + [("compare", p) for p in presets[1:]] \
+        + [("brief", k) for k in briefs] + [("compare", p) for p in compare_pairs(an)]
+    for kind, item in tasks:
+        if kind == "brief" and item not in nar["brief"]:
+            tpl, tok = insights.brief_template(an, *item.split("|"))
+            text, source = narrate.narrate(tpl, tok, client)
+            nar["brief"][item] = {"text": text, "source": source}
+        elif kind == "compare" and f"{item[0]}~{item[1]}" not in nar["compare"]:
+            nar["compare"][f"{item[0]}~{item[1]}"] = compare_text(an, item[0], item[1], client)
+        elif kind == "ask" and item not in examples:
+            hits, method = retrieval.search(passages, item, k=8)
+            srcs = ask.sources(hits)
+            examples[item] = {"passage_ids": [s["passage_id"] for s in srcs], "method": method,
+                              "relevance": hits["relevance"].round(3).tolist(), **ask.answer(item, srcs, client)}
+    NARRATIVES_JSON.write_text(json.dumps(nar, ensure_ascii=False, indent=1), encoding="utf-8")
     ASK_EXAMPLES_JSON.write_text(json.dumps(examples, ensure_ascii=False, indent=1), encoding="utf-8")
     n_ai = sum(v["source"] != "template" for d in nar.values() for v in d.values())
     n_all = sum(len(d) for d in nar.values())

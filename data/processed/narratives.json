@@ -1,65 +1,65 @@
 {
  "brief": {
-  "BRITANNIA|FY2025": {
-   "text": "In FY2025, Britannia Industries gives the most space to product innovation & portfolio (40% of its strategy passages), followed by consumer & brand strategy (17%). Compared with Nestlé, it leans most towards product innovation & portfolio (40% against 25%). This is the earliest report, so changes over time can't be shown yet.",
+  "DABUR|FY2026": {
+   "text": "In FY2026, Dabur India gives the most space to consumer & brand strategy (34% of its strategy passages), followed by product innovation & portfolio (28%). Compared with Marico, it leans most towards consumer & brand strategy (34% against 14%). Since FY2025, its emphasis on digital & e-commerce rose from 6% to 14%, a change bigger than chance.",
    "source": "template"
   },
   "BRITANNIA|FY2026": {
    "text": "In FY2026, Britannia Industries gives the most space to product innovation & portfolio (34% of its strategy passages), followed by market expansion & distribution (30%). Compared with Nestlé, it leans most towards product innovation & portfolio (34% against 28%). Since FY2025, its emphasis on market expansion & distribution rose from 14% to 30%, a change bigger than chance.",
    "source": "template"
   },
-  "DABUR|FY2025": {
-   "text": "In FY2025, Dabur India gives the most space to consumer & brand strategy (36% of its strategy passages), followed by product innovation & portfolio (31%). Compared with Marico, it leans most towards product innovation & portfolio (31% against 19%). This is the earliest report, so changes over time can't be shown yet.",
-   "source": "template"
-  },
-  "DABUR|FY2026": {
-   "text": "In FY2026, Dabur India gives the most space to consumer & brand strategy (34% of its strategy passages), followed by product innovation & portfolio (28%). Compared with Marico, it leans most towards consumer & brand strategy (34% against 14%). Since FY2025, its emphasis on digital & e-commerce rose from 6% to 14%, a change bigger than chance.",
-   "source": "template"
-  },
-  "GODREJ|FY2025": {
-   "text": "In FY2025, Godrej Consumer Products gives the most space to sustainability & sourcing (30% of its strategy passages), followed by product innovation & portfolio (17%). Compared with HUL, it leans most towards sustainability & sourcing (30% against 17%). This is the earliest report, so changes over time can't be shown yet.",
-   "source": "template"
-  },
   "GODREJ|FY2026": {
    "text": "In FY2026, Godrej Consumer Products gives the most space to sustainability & sourcing (35% of its strategy passages), followed by consumer & brand strategy (17%). Compared with HUL, it leans most towards sustainability & sourcing (35% against 15%). Since FY2025, no theme's share has changed by more than chance.",
-   "source": "template"
-  },
-  "HUL|FY2025": {
-   "text": "In FY2025, Hindustan Unilever gives the most space to product innovation & portfolio (22% of its strategy passages), followed by operations & supply chain (19%). Compared with Godrej, it leans most towards digital & e-commerce (17% against 6%). This is the earliest report, so changes over time can't be shown yet.",
    "source": "template"
   },
   "HUL|FY2026": {
    "text": "In FY2026, Hindustan Unilever gives the most space to operations & supply chain (19% of its strategy passages), followed by consumer & brand strategy (19%). Compared with Godrej, it leans most towards digital & e-commerce (16% against 8%). Since FY2025, no theme's share has changed by more than chance.",
    "source": "template"
   },
-  "MARICO|FY2025": {
-   "text": "In FY2025, Marico gives the most space to consumer & brand strategy (24% of its strategy passages), followed by product innovation & portfolio (19%). Compared with Dabur, it leans most towards sustainability & sourcing (16% against 4%). This is the earliest report, so changes over time can't be shown yet.",
-   "source": "template"
-  },
   "MARICO|FY2026": {
    "text": "In FY2026, Marico gives the most space to product innovation & portfolio (30% of its strategy passages), followed by digital & e-commerce (18%). Compared with Dabur, it leans most towards sustainability & sourcing (13% against 4%). Since FY2025, no theme's share has changed by more than chance.",
-   "source": "template"
-  },
-  "NESTLE|FY2025": {
-   "text": "In FY2025, Nestlé India gives the most space to product innovation & portfolio (25% of its strategy passages), followed by operations & supply chain (23%). Compared with Britannia, it leans most towards sustainability & sourcing (21% against 3%). This is the earliest report, so changes over time can't be shown yet.",
    "source": "template"
   },
   "NESTLE|FY2026": {
    "text": "In FY2026, Nestlé India gives the most space to product innovation & portfolio (28% of its strategy passages), followed by market expansion & distribution (25%). Compared with Britannia, it leans most towards operations & supply chain (15% against 8%). Since FY2025, its emphasis on sustainability & sourcing fell from 21% to 5%, a change bigger than chance.",
    "source": "template"
+  },
+  "BRITANNIA|FY2025": {
+   "text": "In FY2025, Britannia Industries gives the most space to product innovation & portfolio (40% of its strategy passages), followed by consumer & brand strategy (17%). Compared with Nestlé, it leans most towards product innovation & portfolio (40% against 25%). This is the earliest report, so changes over time can't be shown yet.",
+   "source": "template"
+  },
+  "DABUR|FY2025": {
+   "text": "In FY2025, Dabur India gives the most space to consumer & brand strategy (36% of its strategy passages), followed by product innovation & portfolio (31%). Compared with Marico, it leans most towards product innovation & portfolio (31% against 19%). This is the earliest report, so changes over time can't be shown yet.",
+   "source": "template"
+  },
+  "GODREJ|FY2025": {
+   "text": "In FY2025, Godrej Consumer Products gives the most space to sustainability & sourcing (30% of its strategy passages), followed by product innovation & portfolio (17%). Compared with HUL, it leans most towards sustainability & sourcing (30% against 17%). This is the earliest report, so changes over time can't be shown yet.",
+   "source": "template"
+  },
+  "HUL|FY2025": {
+   "text": "In FY2025, Hindustan Unilever gives the most space to product innovation & portfolio (22% of its strategy passages), followed by operations & supply chain (19%). Compared with Godrej, it leans most towards digital & e-commerce (17% against 6%). This is the earliest report, so changes over time can't be shown yet.",
+   "source": "template"
+  },
+  "MARICO|FY2025": {
+   "text": "In FY2025, Marico gives the most space to consumer & brand strategy (24% of its strategy passages), followed by product innovation & portfolio (19%). Compared with Dabur, it leans most towards sustainability & sourcing (16% against 4%). This is the earliest report, so changes over time can't be shown yet.",
+   "source": "template"
+  },
+  "NESTLE|FY2025": {
+   "text": "In FY2025, Nestlé India gives the most space to product innovation & portfolio (25% of its strategy passages), followed by operations & supply chain (23%). Compared with Britannia, it leans most towards sustainability & sourcing (21% against 3%). This is the earliest report, so changes over time can't be shown yet.",
+   "source": "template"
   }
  },
  "compare": {
   "DABUR|FY2025~DABUR|FY2026": {
-   "text": "The biggest real difference is digital & e-commerce: 6% of Dabur FY2025's strategy passages against 14% for Dabur FY2026. Every other theme is within noise. Dabur FY2026 is more specific: 41% of its strategy passages name figures, dates or initiatives, against 37% for Dabur FY2025.",
+   "text": "The biggest real difference is digital & e-commerce: 6% of Dabur FY2025's strategy passages against 14% for Dabur FY2026. Every other theme is within noise. Dabur FY2026 is more concrete: 41% of its strategy passages name figures, dates or initiatives, against 37% for Dabur FY2025.",
    "source": "template"
   },
   "HUL|FY2026~GODREJ|FY2026": {
-   "text": "The biggest real difference is sustainability & sourcing: 15% of HUL FY2026's strategy passages against 35% for Godrej FY2026. Digital & e-commerce also differs by more than chance; the other themes are within noise. Godrej FY2026 is more specific: 27% of its strategy passages name figures, dates or initiatives, against 12% for HUL FY2026.",
+   "text": "The biggest real difference is sustainability & sourcing: 15% of HUL FY2026's strategy passages against 35% for Godrej FY2026. Digital & e-commerce also differs by more than chance; the other themes are within noise. Godrej FY2026 is more concrete: 27% of its strategy passages name figures, dates or initiatives, against 12% for HUL FY2026.",
    "source": "template"
   },
   "NESTLE|FY2026~BRITANNIA|FY2026": {
-   "text": "No theme's share differs between Nestlé FY2026 and Britannia FY2026 by more than chance. Britannia FY2026 is more specific: 19% of its strategy passages name figures, dates or initiatives, against 10% for Nestlé FY2026.",
+   "text": "No theme's share differs between Nestlé FY2026 and Britannia FY2026 by more than chance. Britannia FY2026 is more concrete: 19% of its strategy passages name figures, dates or initiatives, against 10% for Nestlé FY2026.",
    "source": "template"
   },
   "BRITANNIA|FY2025~BRITANNIA|FY2026": {
@@ -67,19 +67,19 @@
    "source": "template"
   },
   "GODREJ|FY2025~GODREJ|FY2026": {
-   "text": "No theme's share differs between Godrej FY2025 and Godrej FY2026 by more than chance. Godrej FY2026 is more specific: 27% of its strategy passages name figures, dates or initiatives, against 19% for Godrej FY2025.",
+   "text": "No theme's share differs between Godrej FY2025 and Godrej FY2026 by more than chance. Godrej FY2026 is more concrete: 27% of its strategy passages name figures, dates or initiatives, against 19% for Godrej FY2025.",
    "source": "template"
   },
   "HUL|FY2025~HUL|FY2026": {
-   "text": "No theme's share differs between HUL FY2025 and HUL FY2026 by more than chance. HUL FY2025 is more specific: 14% of its strategy passages name figures, dates or initiatives, against 12% for HUL FY2026.",
+   "text": "No theme's share differs between HUL FY2025 and HUL FY2026 by more than chance. HUL FY2025 is more concrete: 14% of its strategy passages name figures, dates or initiatives, against 12% for HUL FY2026.",
    "source": "template"
   },
   "MARICO|FY2025~MARICO|FY2026": {
-   "text": "No theme's share differs between Marico FY2025 and Marico FY2026 by more than chance. Marico FY2025 is more specific: 41% of its strategy passages name figures, dates or initiatives, against 35% for Marico FY2026.",
+   "text": "No theme's share differs between Marico FY2025 and Marico FY2026 by more than chance. Marico FY2025 is more concrete: 41% of its strategy passages name figures, dates or initiatives, against 35% for Marico FY2026.",
    "source": "template"
   },
   "NESTLE|FY2025~NESTLE|FY2026": {
-   "text": "The biggest real difference is sustainability & sourcing: 21% of Nestlé FY2025's strategy passages against 5% for Nestlé FY2026. Consumer & brand strategy also differs by more than chance; the other themes are within noise. Nestlé FY2025 is more specific: 33% of its strategy passages name figures, dates or initiatives, against 10% for Nestlé FY2026.",
+   "text": "The biggest real difference is sustainability & sourcing: 21% of Nestlé FY2025's strategy passages against 5% for Nestlé FY2026. Consumer & brand strategy also differs by more than chance; the other themes are within noise. Nestlé FY2025 is more concrete: 33% of its strategy passages name figures, dates or initiatives, against 10% for Nestlé FY2026.",
    "source": "template"
   }
  }

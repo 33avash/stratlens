@@ -101,8 +101,10 @@ def render(an: dict, passages: pd.DataFrame, company: str, year: str, focus: str
             conc.append(f"{peer_label} {r['peer_avg']['concreteness']:.1f}")
         if r.get("all_avg") and r["all_avg"].get("concreteness") is not None:
             conc.append(f"all companies {r['all_avg']['concreteness']:.1f}")
+        st.markdown(ui.link("#evidence", "See evidence ↓"), unsafe_allow_html=True)
         if conc:
-            ui.meta("How specific the strategy passages are (concreteness, 0–5): " + " · ".join(conc) + ".")
+            ui.meta(ui.tip("Concreteness", ui.TIPS["concreteness"]) + " of the strategy passages, 0–5: "
+                    + " · ".join(conc) + ".")
 
     # ---------- 3-5. what's new, promises, signature phrases ----------
     if feats is not None:
@@ -111,7 +113,8 @@ def render(an: dict, passages: pd.DataFrame, company: str, year: str, focus: str
         feature_views.signature(passages, feats, company, year, uid)
 
     # ---------- 6. evidence ----------
-    with ui.card(f"{uid}_evidence", "Evidence", meta="the most typical passages per theme · low-confidence hidden"):
+    st.markdown('<div id="evidence"></div>', unsafe_allow_html=True)
+    with ui.card(f"{uid}_evidence", "Evidence", meta="the most typical passages per theme · " + ui.tip("low-confidence hidden", ui.TIPS["confidence"])):
         ui.reliability_note(company)
         for x in rows_sorted:
             t = r["themes"][x["code"]]

@@ -124,8 +124,10 @@ def promises(passages: pd.DataFrame, feats: dict, an: dict, company: str, year: 
 
 def signature(passages: pd.DataFrame, feats: dict, company: str, year: str, uid: str) -> None:
     sig = feats.get("signature", {}).get(year, {}).get(company, {})
-    with ui.card(f"{uid}_sig", "Signature phrases", meta=f"words this company uses on a theme that its peers don't · "
-                                                        f"{year}"):
+    first = next(iter(sorted(sig.items(), key=lambda kv: -max(x["n"] for x in kv[1]))), None)
+    title = (f"Signature phrase: “{first[1][0]['phrase']}” ({THEME_NAMES[first[0]].lower()})" if first
+             else "Signature phrases")
+    with ui.card(f"{uid}_sig", title, meta=f"words this company uses on a theme that its peers don't · {year}"):
         if not sig:
             ui.empty_state("Not enough text to find distinctive phrases.")
             return

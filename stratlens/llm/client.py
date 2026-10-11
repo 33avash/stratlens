@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 from functools import lru_cache
 
@@ -21,6 +22,19 @@ DEFAULT_MODEL = "gemini-3.5-flash"   # current fast, low-cost Flash model (check
 CACHE = DATA / "cache" / "llm.json"
 TIMEOUT_MS = 45_000
 RETRIES = 2
+
+
+MAX_WAIT_S = 70  # wait out per-minute rate limits up to this long; longer waits mean the daily quota is gone
+
+
+def _retry_seconds(msg: str) -> float | None:
+    """'Please retry in 7h29m13.7s' -> seconds, or None if the API gave no delay."""
+    m = re.search(r"retry in\s+(?:(\d+)h)?(?:(\d+)m(?!s))?(?:([\d.]+)s)?", msg)
+    if not m or not any(m.groups()):
+        m2 = re.search(r"retryDelay['\"]?:\s*['\"]?([\d.]+)s", msg)
+        return float(m2.group(1)) if m2 else None
+    h, mi, s = m.groups()
+    return int(h or 0) * 3600 + int(mi or 0) * 60 + float(s or 0)
 
 
 class LLMError(Exception):
@@ -68,6 +82,7 @@ class GeminiClient(LLMClient):
         from google.genai import types
         self._types = types
         self.model = model or DEFAULT_MODEL
+        self.exhausted = False  # set when the daily quota runs out; later calls fail fast
         self._client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=TIMEOUT_MS))
 
     def _config(self, system: str, max_tokens: int, json_mode: bool):
@@ -93,6 +108,8 @@ class GeminiClient(LLMClient):
         cached = _cache_get(key)
         if cached is not None:
             return cached
+        if self.exhausted:
+            raise LLMError("The AI service's daily quota is used up. Try again tomorrow.")
         last = None
         for attempt in range(RETRIES + 1):
             try:
@@ -108,9 +125,13 @@ class GeminiClient(LLMClient):
             except Exception as exc:  # google.genai.errors.APIError and network errors
                 last = exc
                 code = getattr(exc, "code", None)
-                msg = str(exc)
-                if code == 429 and ("free_tier" in msg or "PerDay" in msg or "per day" in msg.lower()):
-                    break  # daily/free-tier quota exhausted: retrying within seconds cannot help
+                wait = _retry_seconds(str(exc))
+                if code == 429 and wait is not None:
+                    if wait > MAX_WAIT_S or attempt >= RETRIES:
+                        self.exhausted = wait > MAX_WAIT_S
+                        break  # daily quota exhausted (retry in hours): waiting here cannot help
+                    time.sleep(wait + 1)  # per-minute limit: wait as long as the API asks, then retry
+                    continue
                 if code in (429, 500, 503) and attempt < RETRIES:
                     time.sleep(2 + 3 * attempt)
                     continue

@@ -92,6 +92,6 @@ scope = f"only {' and '.join(ui.short(c) for c in named)}, named in the question
 with ui.card("ask_src", "Passages", meta=f"{len(srcs)} found" + (f" · {scope}" if scope else "")):
     rows = passages.set_index("passage_id").loc[[s["passage_id"] for s in srcs]].reset_index()
     for i, (_, row) in enumerate(rows.iterrows(), start=1):
-        ui.passage(row, anchor=f"src-{i}", label=f"[{i}]")
+        ui.passage(row, anchor=f"src-{i}", label=f"[{i}]", show_theme=True)
     ui.meta("Found by matching words and meaning (keyword search plus sentence embeddings). "
             "Every passage is searched, strategy or not.")

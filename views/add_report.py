@@ -168,5 +168,7 @@ with st.expander("Inspect a passage step by step"):
     ui.pipeline_inspector(out.set_index("passage_id").loc[pick, "text"])
 cols = ["passage_id", "company", "year", "section", "page", "word_count", "pred", "confidence", "needs_review",
         "specificity", "spec_tier"] + [f"p_{c}" for c in model.classes_] + ["text"]
-st.download_button("Download passages (CSV)", out[cols].to_csv(index=False).encode("utf-8"),
+export = out[cols].rename(columns={"pred": "theme", "specificity": "concreteness", "spec_tier": "concreteness_tier"})
+export["concreteness_tier"] = export["concreteness_tier"].map(ui.TIER_NAMES).fillna(export["concreteness_tier"])
+st.download_button("Download passages (CSV)", export.to_csv(index=False).encode("utf-8"),
                    icon=":material/download:", file_name=f"stratlens_{company}_{year}.csv", mime="text/csv")

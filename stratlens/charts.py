@@ -113,7 +113,8 @@ def per_theme_f1(model: dict, baseline: dict) -> go.Figure:
 
 
 def confusion(cm: dict, height: int = 340) -> go.Figure:
-    labs, mat = cm["labels"], cm["matrix"]
+    labs = [_wrap(THEME_NAMES[c], 14) for c in cm["labels"]]
+    mat = cm["matrix"]
     off = [[0 if i == j else v for j, v in enumerate(r)] for i, r in enumerate(mat)]
     zmax = max(max(r) for r in off) or 1
     f = go.Figure(go.Heatmap(z=off, x=labs, y=labs, text=mat, colorscale=theme.sequential(), zmin=0, zmax=zmax,

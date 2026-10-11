@@ -32,6 +32,22 @@ DARK = {"--card": "#141A17", "--border": "#232B27", "--text": "#E4E9E5", "--mute
         "--warn": "#E3AE52", "--warn-soft": "#2A2314", "--neg-soft": "#2C1A16"}
 
 
+# Hover definitions for the few technical terms that appear outside How it works.
+TIPS = {
+    "pp": "Percentage points: the difference between two percentages (14% vs 6% is +8 points).",
+    "ci": "The likely range (95% interval): resampling the report's passages, the difference fell inside this range "
+          "95 times out of 100. If it includes zero, the difference could be chance.",
+    "chance": "Bigger than chance: the 95% likely range of the difference does not include zero.",
+    "confidence": "The model's probability for the theme it chose (0–1). Passages below 0.45 are never shown as "
+                  "evidence.",
+    "concreteness": "0–5 points per passage: figures (1–2), a date or deadline, a named initiative, commitment "
+                    "language. Found with named entity recognition and rules.",
+    "macro-F1": "The F1 score (balance of precision and recall) averaged over the 7 themes, so rare themes count as "
+                "much as common ones. 1.0 is perfect.",
+}
+TIER_NAMES = {"Specific": "Concrete", "Moderate": "Moderate", "Vague": "Vague"}
+
+
 def system_name(s: str) -> str:
     return SYSTEM_NAMES.get(s, s)
 
@@ -41,7 +57,7 @@ def _json(path):
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner="Loading the trained model…")
 def load_model():
     if not MODEL_PATH.exists():
         return None, None
@@ -53,7 +69,7 @@ def load_metrics() -> dict | None:
     return _json(METRICS_JSON)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner="Loading the reports…")
 def load_passages() -> pd.DataFrame | None:
     if not PASSAGES_CSV.exists():
         return None
@@ -85,7 +101,7 @@ def load_features() -> dict:
     return _json(FEATURES_JSON) or {"novelty": {}, "promises": {}, "follow_up": {}, "signature": {}}
 
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner="Loading passage meanings…")
 def load_embeddings() -> dict:
     import numpy as np
     if not EMBEDDINGS_NPZ.exists():
@@ -361,14 +377,16 @@ def fingerprint_grid(an: dict, mode: str) -> None:
 
 
 # ---------- passages ----------
-def passage(row, show_why: bool = True, anchor: str | None = None, label: str | None = None) -> None:
+def passage(row, show_why: bool = True, anchor: str | None = None, label: str | None = None,
+            show_theme: bool = False) -> None:
     """One evidence passage: text, page, 'why this theme' chips and a details toggle with the raw metadata."""
     color = THEME_COLORS.get(row["pred"], "#999")
     text = html.escape(clean(row["text"]))
     why = row.get("why") if isinstance(row.get("why"), list) else []
     chips = ("".join(f"<span>{html.escape(w)}</span>" for w in why[:3]) if show_why and why else "")
     signals = specificity.describe(row.get("spec_signals"))
-    details = (f'{html.escape(section_name(row["section"]))} · model confidence {row["confidence"]:.2f} · '
+    details = (f'{html.escape(section_name(row["section"]))} · {tip("model confidence", TIPS["confidence"])} '
+               f'{row["confidence"]:.2f} · '
                f'concreteness {int(row["specificity"])}/5' + (f' ({html.escape(signals)})' if signals else "")
                + f' · {html.escape(row["passage_id"])}')
     idattr = f' id="{anchor}"' if anchor else ""
@@ -376,6 +394,7 @@ def passage(row, show_why: bool = True, anchor: str | None = None, label: str | 
     st.markdown(
         f'<div class="sl-quote"{idattr} style="border-left-color:{color}"><div class="q">{lab}{text}</div>'
         f'<div class="m"><span>{html.escape(short(row["company"]))} {row["year"]} · p.{int(row["page"])}</span>'
+        + (theme_label(row["pred"]) if show_theme else "")
         + (f'<span class="sl-why" title="Words that pushed the model towards this theme">why this theme: '
            f'{chips}</span>' if chips else "")
         + f'<details><summary>details</summary>{details}</details></div></div>', unsafe_allow_html=True)
@@ -466,7 +485,7 @@ def pipeline_inspector(text: str) -> None:
                 ("Commitment language", "yes" if sig["commitment"] else "no", int(sig["commitment"]))]
         body = "".join(f"<tr><td>{a}</td><td>{html.escape(b)}</td><td class='r'>+{c}</td></tr>" for a, b, c in rows)
         _step(6, "Concreteness", "regex + spaCy named entities on the original text",
-              f'<table class="sl-table"><tbody>{body}<tr><td><b>Score</b></td><td>{sp["tier"]}</td>'
+              f'<table class="sl-table"><tbody>{body}<tr><td><b>Score</b></td><td>{TIER_NAMES.get(sp["tier"], sp["tier"])}</td>'
               f'<td class="r"><b>{sp["score"]}/5</b></td></tr></tbody></table>')
     with right:
         feats = "".join(f"<tr><td>{html.escape(f['term'])}</td><td class='r'>{f['tfidf']:.3f}</td>"

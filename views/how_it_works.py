@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from stratlens import audit, charts, ui
-from stratlens.config import MODEL_CARD, TEST_CSV
+from stratlens.config import MODEL_CARD, TEST_CSV, THEME_NAMES
 from stratlens.theme import PLOTLY_CONFIG
 
 m, au, an = ui.load_metrics(), ui.load_audit(), ui.load_analytics()
@@ -54,7 +54,7 @@ with tab1:
         elif mode == "Held-out passage" and TEST_CSV.exists():
             test = pd.read_csv(TEST_CSV)
             i = st.selectbox("Passage", test.index, label_visibility="collapsed", key="insp_test",
-                             format_func=lambda k: f"[{test.loc[k, 'label']}] {test.loc[k, 'text'][:110]}…")
+                             format_func=lambda k: f"[{THEME_NAMES[test.loc[k, 'label']]}] {test.loc[k, 'text'][:100]}…")
             text = test.loc[i, "text"]
             ui.meta(f"AI-drafted label: {ui.theme_label(test.loc[i, 'label'])}")
         else:
@@ -131,7 +131,7 @@ with tab2:
                 ui.callout("Meaning-based embeddings tie with word weights, so the model whose every decision can "
                            "be traced to words is the one used.")
             with ui.card("cm", "Where it goes wrong", meta="rows: correct theme · columns: model's theme"):
-                st.plotly_chart(charts.confusion(m["test"]["confusion"], 300), use_container_width=True,
+                st.plotly_chart(charts.confusion(m["test"]["confusion"], 420), use_container_width=True,
                                 config=PLOTLY_CONFIG)
 
         with ui.card("human", "Checked by hand: unseen companies and the AI-drafted labels",

@@ -70,21 +70,26 @@ with ui.card("cmp_sum", title, meta=f"{la} → {lb}"):
 # ---------- diverging chart ----------
 left, right = st.columns([7, 5], gap="medium")
 with left:
-    with ui.card("cmp_div", f"How {lb} differs from {la}",
-                 meta="share of strategy passages, B minus A · click a bar for passages"):
+    n_sig = len(sig)
+    with ui.card("cmp_div", (f"{n_sig} of 6 themes differ by more than chance" if n_sig
+                             else "Every theme is within noise"),
+                 meta=f"{lb} minus {la}, share of strategy passages · click a bar for passages"):
         ev = st.plotly_chart(charts.diverging(diffs, la, lb), use_container_width=True, config=PLOTLY_CONFIG,
                              on_select="rerun", selection_mode="points", key=f"div_{a}_{b}")
-        ui.meta("Coloured bars are bigger than chance; grey bars are within noise. The whisker is the likely "
-                "range: if the report had happened to contain other passages on the same topics, the difference "
-                "would fall inside it 95 times out of 100.")
+        ui.meta(f"Bars in {ui.tip('percentage points', ui.TIPS['pp'])}. Coloured = "
+                f"{ui.tip('bigger than chance', ui.TIPS['chance'])}; grey = within noise. The whisker is the "
+                f"{ui.tip('likely range', ui.TIPS['ci'])}. " + ui.link("#cmp-passages", "See passages ↓"))
 with right:
-    with ui.card("cmp_conc", "How specific each report is, by theme",
+    va = {t: ra["themes"][t]["concreteness"] for t in STRATEGIC_THEMES}
+    vb = {t: rb["themes"][t]["concreteness"] for t in STRATEGIC_THEMES}
+    both = [t for t in STRATEGIC_THEMES if va[t] is not None and vb[t] is not None]
+    more_a = sum(va[t] > vb[t] for t in both)
+    lead, k = (la, more_a) if more_a >= len(both) - more_a else (lb, len(both) - more_a)
+    with ui.card("cmp_conc", f"{lead} is more concrete on {k} of {len(both)} themes",
                  meta="average concreteness, 0–5"):
-        va = {t: ra["themes"][t]["concreteness"] for t in STRATEGIC_THEMES}
-        vb = {t: rb["themes"][t]["concreteness"] for t in STRATEGIC_THEMES}
         st.plotly_chart(charts.paired(va, vb, la, lb, rng=(0, 5)), use_container_width=True, config=PLOTLY_CONFIG)
-        ui.meta("Concreteness counts figures, dates, named initiatives and commitments in a passage (0–5). "
-                "A blank bar means the report has no passages on that theme.")
+        ui.meta(ui.tip("Concreteness", ui.TIPS["concreteness"]) + " counts figures, dates, named initiatives "
+                "and commitments in a passage (0–5). A blank bar means the report has no passages on that theme.")
 
 # ---------- only in A / only in B ----------
 @st.cache_data(show_spinner=False, max_entries=32)
@@ -110,6 +115,7 @@ if pick is None and sig:
     pick = sig[0][1]
 if pick:
     d = diffs[pick]
+    st.markdown('<div id="cmp-passages"></div>', unsafe_allow_html=True)
     with ui.card("cmp_ev", f"Passages on {THEME_NAMES[pick].lower()}",
                  meta=f"{ra['themes'][pick]['share'] * 100:.0f}% in {la} · "
                       f"{rb['themes'][pick]['share'] * 100:.0f}% in {lb}"):

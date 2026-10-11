@@ -24,15 +24,16 @@ else:
     ui.empty_state("Not enough reports for findings yet.")
 
 years = an["years"]
-with ui.card("fingerprint", "Strategy fingerprint",
-             meta="share of each report's strategy passages · click a cell for its passages"):
+with ui.card("fingerprint", insights.fingerprint_title(an, years[-1]),
+             meta="strategy fingerprint: share of each report's strategy passages · click a cell for its passages"):
     opts = years + (["Change"] if an["yoy"] else [])
     mode = st.segmented_control("View", opts, default=years[-1], key="fp_mode", label_visibility="collapsed") \
         or years[-1]
     ui.fingerprint_grid(an, mode)
     if mode == "Change":
-        ui.meta(f"Change from {years[-2]} to {years[-1]} in percentage points. Coloured = bigger than chance; "
-                "grey = within noise. Click a cell to compare the two years.")
+        ui.meta(f"Change from {years[-2]} to {years[-1]} in {ui.tip('percentage points', ui.TIPS['pp'])}. "
+                f"Coloured = {ui.tip('bigger than chance', ui.TIPS['chance'])}; grey = within noise. "
+                "Click a cell to compare the two years.")
     else:
         ui.meta("Stronger colour = more of the strategy passages. This measures what a report talks about, not what the "
                 "company spends.")

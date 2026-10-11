@@ -30,6 +30,13 @@ def _encoder():
         from transformers.utils import logging as hf_logging
         hf_logging.set_verbosity_error()
         hf_logging.disable_progress_bar()
+    except Exception:
+        return None
+    try:  # offline first: use the locally cached model without contacting the Hugging Face Hub
+        return SentenceTransformer(MODEL_NAME, device="cpu", local_files_only=True)
+    except Exception:
+        pass
+    try:  # first run: download (~90 MB)
         return SentenceTransformer(MODEL_NAME, device="cpu")
     except Exception:
         return None
