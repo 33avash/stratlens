@@ -9,7 +9,8 @@ from stratlens.config import TEST_CSV
 
 m = ui.load_metrics()
 thr = m["threshold"]["value"] if m else 0.45
-ui.header("How it works", "From PDF to theme shares: what each stage does and where you see its output.")
+n_train, n_test = (m["dataset"]["n_train"], m["dataset"]["n_test"]) if m else ("the", "held-out")
+ui.header("How it works", "From a 300-page PDF to comparable theme shares, one NLP step at a time.")
 
 # ---------- diagram ----------
 W, H, GAP = 128, 54, 150
@@ -22,15 +23,15 @@ def node(col, y, title, sub, kind=""):
             f'<text class="s" x="{x + 12}" y="{y + 41}">{html.escape(sub)}</text></g>')
 
 
-main = [("Extract", "PyMuPDF"), ("Clean", "rules + regex"), ("Segment", "sentence split"),
-        ("Mask", "gazetteer + regex"), ("TF-IDF", "1–2 grams"), ("Logistic reg.", "7 themes"),
-        ("Confidence", f"flag < {thr:.2f}"), ("Aggregate", "theme shares")]
+main = [("1 Read", "PDF text"), ("2 Clean", "regex"), ("3 Split", "sentences"),
+        ("4 Hide names", "masking"), ("5 TF-IDF", "word weights"), ("6 Classify", "7 themes"),
+        ("Confidence", f"flag < {thr:.2f}"), ("Theme shares", "per report")]
 ya, yb, yc = 34, 150, 250
 parts = [node(i, ya, t, s, "core") for i, (t, s) in enumerate(main)]
 parts += [f'<path class="edge" d="M{4 + i * GAP + W},{ya + H / 2} H{4 + (i + 1) * GAP - 3}" marker-end="url(#ar)"/>'
           for i in range(len(main) - 1)]
-parts += [node(3, yb, "spaCy NER", "+ regex signals"), node(4, yb, "Specificity", "0–5 score"),
-          node(3, yc, "Embeddings", "MiniLM + BM25"), node(4, yc, "Retrieval", "rank fusion"),
+parts += [node(3, yb, "7 spaCy NER", "+ regex signals"), node(4, yb, "Specificity", "0–5 score"),
+          node(3, yc, "8 Retrieve", "BM25 + embeddings"), node(4, yc, "Retrieval", "rank fusion"),
           node(5, yc, "Gemini · Ask", "cited answer", "llm"), node(7, yb, "Gemini · Briefs", "prose only", "llm")]
 sx = 4 + 2 * GAP + W / 2  # branch point below Segment: the branches read unmasked text
 parts += [f'<path class="edge" d="M{sx},{ya + H} V{yc + H / 2} H{4 + 3 * GAP - 3}" marker-end="url(#ar)"/>',
@@ -53,37 +54,43 @@ svg = (f'<svg class="sl-flow" viewBox="0 0 {4 + 7 * GAP + W + 4} {yc + H + 6}" r
 with ui.card("flow", "Pipeline", meta="solid = trained or rule-based NLP · dashed = LLM"):
     st.markdown(svg, unsafe_allow_html=True)
 
-# ---------- stages ----------
-STAGES = [
-    ("Extract", "Pulls text blocks with page numbers; keeps only the Chairman/CEO letter and MD&A pages.",
-     "PyMuPDF; heading detection plus hand-confirmed page ranges", "Upload → Pages; page numbers on every passage"),
-    ("Clean", "Removes running headers, page numbers, tables, captions and statutory boilerplate; fixes "
-              "hyphenation.", "rules and regular expressions; every drop is logged",
-     "Upload → blocks dropped; Model card → data"),
-    ("Segment", "Splits sentences (abbreviation-aware) and packs them into 8–70 word passages; drops duplicates.",
-     "regex sentence splitter", "every passage shown in Evidence, Briefs and Ask"),
-    ("Mask", "Replaces company names, brand names, numbers and years with [COMPANY] [BRAND] [NUM] [YEAR].",
-     "curated name lists + regex (a gazetteer, not statistical NER)", "Evaluation → Robustness: masking test"),
-    ("TF-IDF", "Turns masked text into weighted word and two-word features.",
-     "scikit-learn TfidfVectorizer, sublinear tf, min_df 2", "Evaluation → Explainability: top terms"),
-    ("Logistic regression", "Assigns one of six strategy themes or Other.",
-     "balanced class weights; C chosen by 5-fold CV", "Overview fingerprint; Evaluation → Performance"),
-    ("Confidence", f"Top-class probability; passages below {thr:.2f} are flagged as low confidence.",
-     "threshold checked on cross-validated predictions", "Overview → Low confidence and the filter"),
-    ("Aggregate", "Theme passages ÷ strategic (non-Other) passages per report; YoY shifts with bootstrap CIs.",
-     "counts + 1,000-resample bootstrap", "Overview fingerprint and YoY; Briefs"),
-    ("Specificity", "Scores 0–5 for quantities, dates, named initiatives and commitments on the unmasked text.",
-     "spaCy NER (en_core_web_sm) + regex", "Overview scatter; signals on each evidence passage; Briefs"),
-    ("Retrieval", "Finds passages for a question, strategic or Other.",
-     "BM25 + MiniLM embeddings, reciprocal rank fusion, relevance gate", "Ask → Sources"),
-    ("Gemini", "Writes prose from computed figures and answers from retrieved passages.",
-     "LLM, temperature 0.2, numbers checked against the data", "Briefs text; Ask answer"),
+# ---------- NLP at each step ----------
+# (step, NLP technique, syllabus unit, what it does in plain words, where you see it)
+STEPS = [
+    ("1 · Read", "Text extraction", "Unit 1 · NLP pipeline",
+     "Pulls text with page numbers from the PDF and keeps only the Chairman's letter and MD&A.", "Upload"),
+    ("2 · Clean", "Text preprocessing with regular expressions", "Unit 2 · regex",
+     "Strips headers, page numbers, tables and legal boilerplate; repairs broken words.", "Upload → dropped blocks"),
+    ("3 · Split", "Sentence segmentation and tokenisation", "Unit 1–2",
+     "Breaks text into sentences (knows 'Rs.' and 'Mr.' aren't sentence ends), then 8–70 word passages.",
+     "every evidence passage"),
+    ("4 · Hide names", "Entity masking (gazetteer + regex)", "Unit 2 · NER · Unit 5 · bias",
+     "Swaps company names, brands, numbers and years for [COMPANY] [BRAND] [NUM] [YEAR], so the model learns "
+     "topics, not who wrote it.", "inspector step 2"),
+    ("5 · Words → numbers", "Bag-of-words → TF-IDF with 1–2 word n-grams", "Unit 3 · feature representation",
+     "Scores each word and word pair by how distinctive it is for the passage, e.g. 'quick commerce'.",
+     "inspector step 3"),
+    ("6 · Classify", "Supervised text classification (logistic regression)", "Unit 4 · ML techniques",
+     f"Learns from {n_train} labelled passages to assign one of six strategy themes or Other, with a confidence.",
+     "Overview, Evaluation"),
+    ("   compared with", "Keyword lexicon · MiniLM sentence embeddings", "Unit 4 · lexicons · Unit 3 · embeddings",
+     "A simple keyword list and a meaning-based embedding model were tested on the same passages.",
+     "Evaluation → Models"),
+    ("7 · How concrete", "Named Entity Recognition (spaCy) + regex", "Unit 2 · NER",
+     "Scores 0–5 per passage for figures, dates, named initiatives and commitments.", "Overview scatter"),
+    ("8 · Ask and briefs", "Retrieval (BM25 + embeddings) and an LLM", "Unit 5 · LLMs",
+     "Finds the passages for a question; Gemini writes answers and briefs that cite them. It never labels or "
+     "computes numbers.", "Ask, Briefs"),
+    ("9 · Check", "Evaluation: precision, recall, F1, subgroups, explainability", "Unit 5 · evaluation, bias",
+     f"Scores the model on {n_test} unseen passages, by company and writing style, and shows which words drove "
+     "each label.", "Evaluation, Model card"),
 ]
-with ui.card("stages", "Stages"):
-    rows = "".join(f"<tr><td><b>{html.escape(s)}</b></td><td>{html.escape(w)}</td><td class='sl-small'>"
-                   f"{html.escape(t)}</td><td class='sl-small'>{html.escape(a)}</td></tr>" for s, w, t, a in STAGES)
-    st.markdown("<table class='sl-table'><thead><tr><th>Stage</th><th>What it does</th><th>Technique</th>"
-                f"<th>Where you see it</th></tr></thead><tbody>{rows}</tbody></table>", unsafe_allow_html=True)
+with ui.card("stages", "The NLP at each step", meta="syllabus unit in grey"):
+    rows = "".join(f"<tr><td><b>{html.escape(s)}</b></td><td class='nlp'>{html.escape(t)}<br>"
+                   f"<span class='unit'>{html.escape(u)}</span></td><td>{html.escape(w)}</td>"
+                   f"<td class='sl-small'>{html.escape(a)}</td></tr>" for s, t, u, w, a in STEPS)
+    st.markdown("<table class='sl-table'><thead><tr><th>Step</th><th>NLP technique</th><th>What it does</th>"
+                f"<th>See it in</th></tr></thead><tbody>{rows}</tbody></table>", unsafe_allow_html=True)
 
 # ---------- inspector ----------
 EXAMPLES = [

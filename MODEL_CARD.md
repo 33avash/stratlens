@@ -1,6 +1,6 @@
 # Model card: StratLens theme classifier
 
-*Generated from reports/metrics.json on 2026-10-09.*
+*Generated from reports/metrics.json on 2026-10-10.*
 
 ### Purpose
 Classifies passages from Indian FMCG annual reports (Chairman/CEO letter and MD&A) into six strategy themes plus Other, to compare disclosure emphasis across companies and years. Not a measure of spending, execution or performance.
@@ -12,14 +12,15 @@ Classifies passages from Indian FMCG annual reports (Chairman/CEO letter and MD&
 - **Provenance:** labels were AI-drafted following the labelling guidelines (`docs/labelling_guidelines.md`) and have not been human-verified.
 
 ### Model
-Masked TF-IDF (1–2 grams) + logistic regression with balanced class weights. C = 10 by 5-fold CV on 708 training passages; tested on 177 held-out passages. Company names, brands, numbers and years are masked before training.
+- **NLP pipeline:** PDF text extraction → regex cleaning → sentence segmentation → masking of names, brands and numbers → TF-IDF features on words and word pairs → logistic regression over 7 classes.
+- **Training:** 708 labelled passages, regularisation C = 10 picked by 5-fold cross-validation; scored once on 177 held-out passages.
 
 | System | Accuracy | Macro-F1 | 95% CI |
 |---|---|---|---|
-| TF-IDF + LR (masked) | 0.81 | **0.77** | 0.69–0.84 |
-| MiniLM embeddings + LR (masked) | 0.79 | **0.77** | 0.69–0.83 |
-| TF-IDF + LR (unmasked) | 0.81 | **0.78** | 0.69–0.84 |
-| Keyword baseline | 0.49 | **0.49** | 0.41–0.55 |
+| Word-weight classifier (TF-IDF) | 0.81 | **0.77** | 0.69–0.84 |
+| Meaning-based classifier (MiniLM embeddings) | 0.79 | **0.77** | 0.69–0.83 |
+| Word-weight classifier, names not hidden | 0.81 | **0.78** | 0.69–0.84 |
+| Keyword matching (lexicon) | 0.49 | **0.49** | 0.41–0.55 |
 
 ### Subgroups (held-out)
 | Group | n | Macro-F1 | 95% CI |
@@ -32,8 +33,10 @@ Masked TF-IDF (1–2 grams) + logistic regression with balanced class weights. C
 | Hindustan Unilever | 75 | 0.82 | 0.67–0.91 |
 | Nestlé India *(small n)* | 25 | 0.44 | 0.23–0.58 |
 
-### Key finding
-Masking company names, brands and numbers does not change theme accuracy (paired CI -0.05 to +0.04), but company identity is still 79% predictable from masked text (majority guess 49%), so house style may confound cross-company comparisons. The largest group of errors is strategic passages predicted as Other (15 of 34; the reverse happens 7 times), so strategy passages are missed more often than invented and theme shares are likely conservative. By company, Nestlé India scores macro-F1 0.44 [0.23–0.58] against 0.82 [0.67–0.91] for Hindustan Unilever. Only n = 25 test passages come from Nestlé India, so treat this as indicative.
+### Key audit findings
+- **Writing style gives the company away (79%).** Hiding names, brands and numbers doesn't hurt theme accuracy, yet a classifier still guesses the company 79% of the time (chance 49%). Cross-company differences may partly be house style.
+- **It misses strategy more than it invents it (15 vs 7).** Of 34 test errors, 15 are strategy passages called Other and 7 go the other way, so theme shares are, if anything, understated.
+- **Weaker on Nestlé India (0.44 vs 0.82).** Nestlé India scores macro-F1 0.44 [0.23–0.58] against 0.82 [0.67–0.91] for Hindustan Unilever on only 25 test passages, so it's a flag, not a verdict.
 
 ### Explainability
 Top coefficients per theme and per-passage term contributions (tf-idf × coefficient) are shown in the app. They show association, not causation.

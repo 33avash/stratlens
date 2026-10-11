@@ -1,13 +1,16 @@
 """Upload: run a new report through the pipeline (extract, select pages, segment, classify, score specificity)."""
 import hashlib
+import html
 import json
+import re
 
 import pandas as pd
 import streamlit as st
 
 from stratlens import model as mdl
-from stratlens import specificity, ui
+from stratlens import report, specificity, ui
 from stratlens.config import COMPANY_NAMES, THEME_NAMES, THEMES
+from stratlens.llm import client as llm
 from stratlens.extract import ExtractionError, extract_bytes, parse_filename
 from stratlens.preprocess import segment
 from stratlens.sections import Section, resolve_sections
@@ -117,6 +120,62 @@ if out is None:
     st.stop()
 if st.session_state.get("an_sig") != sig:
     ui.note("Settings changed since the last run. Classify again.", warn=True)
+
+# ---------- summary ----------
+@st.cache_data(show_spinner=False, max_entries=8)
+def _summary(sig_: tuple, _out: pd.DataFrame, ai: bool) -> tuple[str, str]:
+    """One paragraph from the classifier's figures, compared with the sample reports where possible."""
+    base = ui.load_benchmark()
+    preds = _out
+    if base is not None:
+        base = base[~((base.company == company) & (base.year == year))]
+        preds = pd.concat([base, _out], ignore_index=True)
+    try:
+        f = report.report_facts(preds, company, year, ui.load_metrics())
+    except ValueError:
+        return "", ""
+    f["company_name"] = COMPANY_NAMES.get(company, company)
+    n, source = report.template_narrative(f), "template"
+    client = llm.get_client() if ai else None
+    if client is not None:
+        try:
+            n, _ = report.llm_narrative(f, client)
+            source = "AI-assisted, numbers checked"
+        except Exception:
+            pass
+    sp = f["specificity"]
+    parts = [n["summary"], f"Of {f['n_passages']} passages read, {f['n_strategic']} discuss strategy"
+             + (f", and {sp['concrete_pct']}% of these carry concrete detail such as figures, dates or named "
+                "initiatives." if sp.get("concrete_pct") is not None else ".")]
+    if sp["by_theme"]:
+        hi = max(sp["by_theme"], key=lambda r: r["mean_score"])
+        lo = min(sp["by_theme"], key=lambda r: r["mean_score"])
+        if hi["theme"] != lo["theme"] and "most concrete" not in n["summary"]:
+            parts.append(f"It is most concrete on {hi['theme'].lower()} and vaguest on {lo['theme'].lower()}.")
+    return _cite_pages(" ".join(p for p in parts if p), _out), source
+
+
+def _cite_pages(text: str, df: pd.DataFrame, k: int = 3) -> str:
+    """After the first mention of each theme, add the pages most of its passages come from."""
+    for code in THEMES:
+        if code == "OTHER":
+            continue
+        pages = sorted(int(p) for p in df[df.pred == code]["page"].value_counts().head(k).index)
+        m = re.search(re.escape(THEME_NAMES[code]), text, re.I)
+        if m and pages:
+            ref = (f"p. {pages[0]}" if len(pages) == 1 else "pp. " + ", ".join(map(str, pages)))
+            text = text[:m.end()] + f" ({ref})" + text[m.end():]
+    return text
+
+
+with st.spinner("Summarising the report…"):
+    paragraph, source = _summary(sig, out, True)
+if paragraph:
+    with ui.card("summary", "Report summary", meta=f"{COMPANY_NAMES.get(company, company)} {year} · {source}"):
+        st.markdown(f'<p class="sl-para">{html.escape(paragraph)}</p>', unsafe_allow_html=True)
+        st.markdown('<p class="sl-meta">Built from this report’s theme shares and concreteness scores. '
+                    'Page numbers show where most of each theme’s passages come from. '
+                    'Measures emphasis, not spending.</p>', unsafe_allow_html=True)
 
 # ---------- review ----------
 strategic = out[out.pred != "OTHER"]

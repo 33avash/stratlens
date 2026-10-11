@@ -27,10 +27,13 @@ logo = "logo_dark.svg" if theme.is_dark() else "logo.svg"
 st.logo(str(ui.ROOT / "assets" / logo), size="large")
 nav = st.navigation(pages, position="sidebar")
 
+with st.sidebar:
+    ui.theme_toggle()
+
 metrics = ui.load_metrics()
 if metrics:
     with st.sidebar:
-        st.markdown(f'<div class="sl-sbfoot">model · tf-idf + lr<br>data · {metrics["generated"]}</div>',
+        st.markdown(f'<div class="sl-sbfoot">NLP theme classifier · 7 themes<br>data · {metrics["generated"]}</div>',
                     unsafe_allow_html=True)
 
 nav.run()

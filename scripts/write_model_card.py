@@ -14,7 +14,7 @@ import pandas as pd
 
 from stratlens import audit
 from stratlens.config import (COMPANY_NAMES, CORPUS_CSV, DROPS_CSV, METRICS_JSON, MODEL_CARD, ROOT, SECTIONS_CSV,
-                              THEMES)
+                              SYSTEM_NAMES, THEMES)
 
 SPOTCHECK_CSV = ROOT / "docs" / "specificity_spotcheck.csv"
 
@@ -68,8 +68,9 @@ def main() -> None:
     sub_rows = "\n".join(
         f"| {COMPANY_NAMES.get(s['group'], s['group'])}{' *(small n)*' if s['too_small'] else ''} | {s['n']} | "
         f"{f2(s['macro_f1'])} | {ci(s.get('macro_f1_ci'))} |" for s in m["subgroups"])
-    comp_rows = "\n".join(f"| {r['system']} | {f2(r['accuracy'])} | **{f2(r['macro_f1'])}** | {ci(r['macro_f1_ci'])} |"
-                          for r in m["comparison"])
+    comp_rows = "\n".join(f"| {SYSTEM_NAMES.get(r['system'], r['system'])} | {f2(r['accuracy'])} | "
+                          f"**{f2(r['macro_f1'])}** | {ci(r['macro_f1_ci'])} |" for r in m["comparison"])
+    findings = "\n".join(f"- **{h}.** {x}" for h, x in audit.key_findings(m))
     card = f"""# Model card: StratLens theme classifier
 
 *Generated from reports/metrics.json on {m['generated']}.*
@@ -84,7 +85,8 @@ Classifies passages from Indian FMCG annual reports (Chairman/CEO letter and MD&
 - **Provenance:** labels were AI-drafted following the labelling guidelines (`docs/labelling_guidelines.md`) and have not been human-verified.
 
 ### Model
-Masked TF-IDF (1–2 grams) + logistic regression with balanced class weights. C = {m['model']['best_C']} by 5-fold CV on {d['n_train']} training passages; tested on {t['n']} held-out passages. Company names, brands, numbers and years are masked before training.
+- **NLP pipeline:** PDF text extraction → regex cleaning → sentence segmentation → masking of names, brands and numbers → TF-IDF features on words and word pairs → logistic regression over 7 classes.
+- **Training:** {d['n_train']} labelled passages, regularisation C = {m['model']['best_C']} picked by 5-fold cross-validation; scored once on {t['n']} held-out passages.
 
 | System | Accuracy | Macro-F1 | 95% CI |
 |---|---|---|---|
@@ -95,8 +97,8 @@ Masked TF-IDF (1–2 grams) + logistic regression with balanced class weights. C
 |---|---|---|---|
 {sub_rows}
 
-### Key finding
-{m['key_finding']}
+### Key audit findings
+{findings}
 
 ### Explainability
 Top coefficients per theme and per-passage term contributions (tf-idf × coefficient) are shown in the app. They show association, not causation.

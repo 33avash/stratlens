@@ -7,16 +7,20 @@ from contextlib import contextmanager
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from . import explain
 from . import model as mdl
 from . import specificity, theme, trace
 from .config import (BENCHMARK_CSV, COMPANY_NAMES, MAX_WORDS, METRICS_JSON, MODEL_PATH, REVIEW_THRESHOLD, ROOT,
-                     SECTION_NAMES, SECTIONS_CSV, THEME_NAMES)
+                     SECTION_NAMES, SECTIONS_CSV, SYSTEM_NAMES, THEME_NAMES)
 from .report import clean
 from .theme import THEME_COLORS, tint
 
 CSS_PATH = ROOT / "assets" / "style.css"
+
+def system_name(s: str) -> str:
+    return SYSTEM_NAMES.get(s, s)
 
 LIGHT = {"--card": "#FFFFFF", "--border": "#E6E9E5", "--text": "#141A17", "--muted": "#6B756F",
          "--subtle": "#F3F5F2", "--bar": "#D3D9D4", "--accent": "#1E8E4E", "--accent-soft": "#E4F3EA",
@@ -79,6 +83,20 @@ def inject_css() -> None:
     st.markdown(f"<style>{vars_css}\n{CSS_PATH.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
 
+def _queue_theme_switch() -> None:
+    st.session_state["_theme_switch"] = "Light" if st.session_state["light_mode"] else "Dark"
+
+
+def theme_toggle() -> None:
+    """Light/dark switch. Streamlit keeps the chosen theme in the browser, so it is stored there and the page reloads."""
+    pending = st.session_state.pop("_theme_switch", None)
+    if pending:
+        components.html(f"<script>window.parent.localStorage.setItem('stActiveTheme-/-v2', '\"{pending}\"');"
+                        "window.parent.location.reload();</script>", height=0)
+    st.session_state["light_mode"] = (pending == "Light") if pending else not theme.is_dark()
+    st.toggle("Light mode", key="light_mode", on_change=_queue_theme_switch)
+
+
 def header(title: str, subtitle: str = "", stamp: str = "") -> None:
     st.markdown(f'<div class="sl-head"><div><div class="sl-title">{title}</div>'
                 + (f'<p class="sl-sub">{subtitle}</p>' if subtitle else "") + "</div>"
@@ -125,6 +143,13 @@ def kpi_cards(items: list[dict], inset: bool = False) -> None:
         cells.append(f'<div class="sl-kpi{" inset" if inset else ""}"><div style="min-width:0"><div class="lab">'
                      f'{label}</div><div class="val">{it["value"]}{unit}</div>{sub}</div></div>')
     st.markdown(f'<div class="sl-kpis" style="--n:{len(items)}">{"".join(cells)}</div>', unsafe_allow_html=True)
+
+
+def findings(items: list[tuple[str, str]]) -> None:
+    """Numbered short findings: a bold headline and one muted line each."""
+    st.markdown('<div class="sl-finds">' + "".join(
+        f'<div class="sl-find"><b>{i}</b><div><div class="h">{html.escape(h)}</div><div class="d">{html.escape(d)}'
+        f'</div></div></div>' for i, (h, d) in enumerate(items, 1)) + "</div>", unsafe_allow_html=True)
 
 
 def kpi_strip(items: list[tuple[str, str]]) -> None:

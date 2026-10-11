@@ -21,13 +21,15 @@ if base is None:
     st.stop()
 
 session = st.session_state.get("session_reports", {})
-h1, h2 = st.columns([4, 1], vertical_alignment="bottom")
-with h1:
-    ui.header("Overview", "What HUL, Dabur and Nestlé India emphasise when they describe their strategy.")
-with h2:
-    with st.popover("Filters", icon=":material/tune:", use_container_width=True):
-        exclude_review = st.toggle("Hide low-confidence passages", value=False)
-        include_session = st.toggle("Include uploaded reports", value=True, disabled=not session)
+include_session = False
+if session:
+    h1, h2 = st.columns([4, 1], vertical_alignment="bottom")
+    with h1:
+        ui.header("Overview", "What HUL, Dabur and Nestlé India emphasise in their strategy, read by an NLP model.")
+    with h2:
+        include_session = st.toggle("Include uploaded reports", value=True)
+else:
+    ui.header("Overview", "What HUL, Dabur and Nestlé India emphasise in their strategy, read by an NLP model.")
 
 preds = base
 if session and include_session:
@@ -35,84 +37,86 @@ if session and include_session:
     keys = set(map(tuple, extra[["company", "year"]].drop_duplicates().values))
     preds = pd.concat([base[~base[["company", "year"]].apply(tuple, axis=1).isin(keys)], extra], ignore_index=True)
 
-shares = compare.theme_shares(preds, exclude_review)
+shares = compare.theme_shares(preds)
 yoy = compare.yoy_change(shares)
 companies = sorted(shares["company"].unique())
 years = sorted(shares["year"].unique())
-scope = compare.in_scope(preds, exclude_review)
-strategic = compare.strategic(preds, exclude_review)
+scope = compare.in_scope(preds)
+strategic = compare.strategic(preds)
 per_rep = preds[["company", "year"]].drop_duplicates().sort_values(["company", "year"])
-thr = metrics["threshold"]["value"] if metrics else 0.45
+facts = {}
+for c, y in per_rep[["company", "year"]].values:
+    try:
+        facts[(c, y)] = report.report_facts(preds, c, y, n_evidence=0)
+    except ValueError:
+        pass
 
 # ---------- KPIs ----------
-k = [{"label": "Reports", "value": f"{len(per_rep)}", "sub": f"{preds.company.nunique()} companies · "
-      f"{years[0][-4:]}–{years[-1][-2:]}"},
-     {"label": "Strategy passages", "value": f"{len(strategic):,}", "sub": f"<b>{len(strategic) / len(scope):.0%}</b> of "
-      f"{len(scope):,} passages", "help": "Passages whose predicted theme is not Other. Shares on every page use "
+k = [{"label": "Annual reports", "value": f"{len(per_rep)}", "sub": f"{preds.company.nunique()} companies · "
+      f"{years[0]}–{years[-1][-2:]}"},
+     {"label": "Passages read", "value": f"{len(scope):,}", "sub": "Chairman's letter + MD&A"},
+     {"label": "Strategy passages", "value": f"{len(strategic):,}", "sub": f"<b>{len(strategic) / len(scope):.0%}</b> "
+      "classified into 6 themes", "help": "Passages whose predicted theme is not Other. Shares on every page use "
                                           "this as the denominator."}]
 if metrics:
     t = metrics["test"]["model"]
-    k.append({"label": "Classifier macro-F1", "value": f"{t['macro_f1']:.2f}",
-              "sub": f"<b>+{t['macro_f1'] - metrics['test']['baseline']['macro_f1']:.2f}</b> vs keywords"})
-k.append({"label": "Low confidence", "value": f"{int(preds['needs_review'].sum()):,}",
-          "sub": f"of {len(preds):,} passages · confidence &lt; {thr:.2f}"
-                 + (" · hidden" if exclude_review else "")})
+    k.append({"label": "Model score (macro-F1)", "value": f"{t['macro_f1']:.2f}",
+              "sub": f"unseen text · keywords {metrics['test']['baseline']['macro_f1']:.2f}",
+              "help": "Average F1 across the seven themes on held-out passages the model never saw in training."})
 ui.kpi_cards(k)
 
-# ---------- fingerprint + reports ----------
-c1, c2 = st.columns([7, 5], gap="medium")
-with c1:
-    with ui.card("fingerprint", "Strategy fingerprint", meta="share of strategy passages"):
-        rows_ = [(c, y) for c in companies for y in years if ((shares.company == c) & (shares.year == y)).any()]
-        z, txt, hover = [], [], []
-        for c, y in rows_:
-            part = shares[(shares.company == c) & (shares.year == y)].set_index("theme")
-            z.append([part.loc[t, "share"] * 100 for t in STRATEGIC_THEMES])
-            txt.append([f"{part.loc[t, 'share'] * 100:.0f}" for t in STRATEGIC_THEMES])
-            hover.append([f"{ui.company_name(c)} {y} · {THEME_NAMES[t]}<br>{part.loc[t, 'share'] * 100:.0f}% "
-                          f"({int(part.loc[t, 'count'])}/{int(part.loc[t, 'strategic_total'])})" for t in STRATEGIC_THEMES])
-        zmax = max(max(r) for r in z) if z else 1
-        xs = [SHORT[t] for t in STRATEGIC_THEMES]
-        ys = [f"{ui.company_name(c).replace('Hindustan Unilever', 'HUL').replace(' India', '')} {y[-2:]}" for c, y in rows_]
-        heat = go.Figure(go.Heatmap(z=z, x=xs, y=ys, hovertext=hover, hoverinfo="text", colorscale=theme.sequential(),
-                                    zmin=0, zmax=zmax, showscale=False, xgap=4, ygap=4))
-        dark = theme.is_dark()
-        for i, r in enumerate(z):
-            for j, v in enumerate(r):
-                strong = v > zmax * 0.55
-                heat.add_annotation(x=xs[j], y=ys[i], text=txt[i][j], showarrow=False,
-                                    font=dict(size=12, family=theme.MONO,
-                                              color=("#0C100E" if strong else "#E4E9E5") if dark else
-                                              ("#FFFFFF" if strong else "#141A17")))
-        heat.update_yaxes(autorange="reversed", showgrid=False)
-        heat.update_xaxes(side="top", tickangle=0, showgrid=False, tickfont=dict(family=theme.SANS, size=11.5))
-        theme.style(heat, 70 + 48 * len(rows_), margin=dict(l=4, r=4, t=28, b=4), legend=False)
-        st.plotly_chart(heat, use_container_width=True, config=PLOTLY_CONFIG)
-        st.markdown('<p class="sl-meta">Share of narrative, not spend. Values in %.</p>', unsafe_allow_html=True)
+# ---------- what we found (all from the classifier's shares and bootstrap shifts) ----------
+found = []
+for c in companies:
+    latest = [f for (cc, _), f in sorted(facts.items()) if cc == c]
+    if not latest:
+        continue
+    f = latest[-1]
+    d = f.get("distinctive_theme")
+    if d and d["diff_vs_peers_pp"] > 0:
+        row = next(r for r in f["themes"] if r["theme"] == d["theme"])
+        found.append((f"{f['company_name']} leans on {SHORT[row['code']].lower()}",
+                      f"{row['share_pct']}% of its {f['year']} strategy talk, {d['diff_vs_peers_pp']:+.0f} pp above peers."))
+shifts = [(f["company_name"], s_) for f in facts.values() for s_ in f["significant_shifts"]]
+if shifts:
+    name, s_ = max(shifts, key=lambda x: abs(x[1]["change_pp"]))
+    found.append((f"{len(shifts)} year-on-year shift{'s' if len(shifts) > 1 else ''} beyond noise",
+                  f"{name}, {s_['theme'].lower()}: {s_['from_pct']}% → {s_['to_pct']}% (95% CI {s_['ci_pp'][0]:+.1f} to "
+                  f"{s_['ci_pp'][1]:+.1f} pp). The rest is noise."))
+elif len(years) > 1:
+    found.append(("No year-on-year shift beyond noise", "Every change sits inside its 95% bootstrap interval."))
+if found:
+    with ui.card("found", "What we found", meta="disclosure emphasis, not spending"):
+        ui.findings(found)
 
-with c2:
-    with ui.card("reports", "Reports", meta="lead theme · " + ui.tip("vs peers", compare.VS_PEERS_HELP) + " · change"):
-        rows = []
-        for c, y in per_rep[["company", "year"]].values:
-            try:
-                f = report.report_facts(preds, c, y, n_evidence=0, exclude_review=exclude_review)
-            except ValueError:
-                continue
-            top = max(f["themes"], key=lambda r: r["share_pct"])
-            chips = [ui.pill(f"{SHORT[top['code']]} {top['share_pct']}%", "good")]
-            d = f.get("distinctive_theme")
-            if d and d["diff_vs_peers_pp"] > 0:
-                code = next(t["code"] for t in f["themes"] if t["theme"] == d["theme"])
-                chips.append(ui.pill(f"{SHORT[code]} {d['diff_vs_peers_pp']:+.0f} pp vs peers", help=compare.VS_PEERS_HELP))
-            for s in f["significant_shifts"][:1]:
-                code = next(t["code"] for t in f["themes"] if t["theme"] == s["theme"])
-                chips.append(ui.pill(f"{SHORT[code]} {s['from_pct']}→{s['to_pct']}%",
-                                     "good" if s["change_pp"] > 0 else "neg"))
-            rows.append(f'<div class="sl-sum"><div class="who">{ui.company_badge(c)}'
-                        f'{html.escape(ui.company_name(c))}<span>{y}</span></div>'
-                        f'<div class="txt" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'
-                        f'{"".join(chips)}</div></div>')
-        st.markdown("".join(rows), unsafe_allow_html=True)
+# ---------- fingerprint ----------
+with ui.card("fingerprint", "Strategy fingerprint", meta="% of each report's strategy passages · hover for counts"):
+    rows_ = [(c, y) for c in companies for y in years if ((shares.company == c) & (shares.year == y)).any()]
+    z, txt, hover = [], [], []
+    for c, y in rows_:
+        part = shares[(shares.company == c) & (shares.year == y)].set_index("theme")
+        z.append([part.loc[t, "share"] * 100 for t in STRATEGIC_THEMES])
+        txt.append([f"{part.loc[t, 'share'] * 100:.0f}" for t in STRATEGIC_THEMES])
+        hover.append([f"{ui.company_name(c)} {y} · {THEME_NAMES[t]}<br>{part.loc[t, 'share'] * 100:.0f}% "
+                      f"({int(part.loc[t, 'count'])}/{int(part.loc[t, 'strategic_total'])})" for t in STRATEGIC_THEMES])
+    zmax = max(max(r) for r in z) if z else 1
+    xs = [SHORT[t] for t in STRATEGIC_THEMES]
+    ys = [f"{ui.company_name(c).replace('Hindustan Unilever', 'HUL').replace(' India', '')} {y[-2:]}" for c, y in rows_]
+    heat = go.Figure(go.Heatmap(z=z, x=xs, y=ys, hovertext=hover, hoverinfo="text", colorscale=theme.sequential(),
+                                zmin=0, zmax=zmax, showscale=False, xgap=4, ygap=4))
+    dark = theme.is_dark()
+    for i, r in enumerate(z):
+        for j, v in enumerate(r):
+            strong = v > zmax * 0.55
+            heat.add_annotation(x=xs[j], y=ys[i], text=txt[i][j], showarrow=False,
+                                font=dict(size=14, family=theme.MONO,
+                                          color=("#0C100E" if strong else "#E4E9E5") if dark else
+                                          ("#FFFFFF" if strong else "#141A17")))
+    heat.update_yaxes(autorange="reversed", showgrid=False)
+    heat.update_xaxes(side="top", tickangle=0, showgrid=False, tickfont=dict(family=theme.SANS, size=13))
+    theme.style(heat, 70 + 54 * len(rows_), margin=dict(l=4, r=4, t=28, b=4), legend=False)
+    st.plotly_chart(heat, use_container_width=True, config=PLOTLY_CONFIG)
+    st.markdown('<p class="sl-meta">Stronger colour = more of the strategy narrative. Measures emphasis, not spending.</p>', unsafe_allow_html=True)
 
 # ---------- specificity ----------
 def place_labels(xs, ys, labels, xr, yr):
@@ -143,7 +147,7 @@ def place_labels(xs, ys, labels, xr, yr):
 ev_spec = None
 if "specificity" in preds:
     with ui.card("spec", "How much vs how concretely",
-                 meta="x: share of strategy passages · y: mean specificity score · size: passages · colour: theme"):
+                 meta="across: how much it is discussed · up: how concretely (0–5)"):
         yr2 = st.segmented_control("Year ", years, default=years[-1], key="spec_year",
                                    label_visibility="collapsed") or years[-1]
         sp = strategic[strategic.year == yr2].groupby(["company", "pred"]).agg(
@@ -163,27 +167,25 @@ if "specificity" in preds:
                 x=part["share"] * 100, y=part["mean_spec"], mode="markers+text", name=ui.company_name(c),
                 text=labels, textposition=place_labels((part["share"] * 100).tolist(), part["mean_spec"].tolist(),
                                                        labels, xr, yr_),
-                textfont=dict(size=10.5, color=MUTED), showlegend=False,
+                textfont=dict(size=10.5, color=MUTED), showlegend=False, cliponaxis=False,
                 marker=dict(size=[9 + min(n, 70) / 4 for n in part["n"]], color=[THEME_COLORS[t] for t in part["pred"]],
                             opacity=0.9, line=dict(width=0)),
                 customdata=[[c, yr2, r.pred, THEME_NAMES[r.pred], int(r.n)] for r in part.itertuples()],
                 hovertemplate="%{customdata[3]}<br>%{x:.0f}% of strategy passages · mean specificity %{y:.2f} of 5"
                               " · %{customdata[4]} passages<extra></extra>", row=1, col=kk)
             fig.update_xaxes(range=xr, ticksuffix="%", row=1, col=kk)
-        fig.update_yaxes(range=yr_, row=1, col=1, title_text="mean score", title_font=dict(size=11))
+        fig.update_yaxes(range=yr_, row=1, col=1, title_text="concreteness", title_font=dict(size=11))
         theme.style(fig, 340, margin=dict(l=4, r=8, t=30, b=4), legend=False)
         fig.update_annotations(font=dict(size=12.5))
         ev_spec = st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG, on_select="rerun",
                                   selection_mode="points", key="spec_chart")
-        st.markdown(f'<p class="sl-meta">Specificity is scored 0–5 per passage (quantities up to +2, date +1, named '
-                    f'initiative +1, commitment +1); the y axis shows 0–{yr_[1]:.1f} because no theme averages higher. '
-                    'Themes with fewer than 3 passages are omitted. Click a point for its passages.</p>',
-                    unsafe_allow_html=True)
+        st.markdown('<p class="sl-meta">Concreteness comes from spaCy NER and rules: figures, dates, named initiatives '
+                    'and commitments. Click a point to read its passages below.</p>', unsafe_allow_html=True)
 
 # ---------- evidence + YoY ----------
 c1, c2 = st.columns([7, 5], gap="medium")
 with c1:
-    with ui.card("evidence", "Evidence", meta="click a point above, or choose"):
+    with ui.card("evidence", "Evidence", meta="the passages behind every number"):
         if ev_spec and ev_spec.selection and ev_spec.selection.points:
             cd = ev_spec.selection.points[0].get("customdata")
             if cd:
@@ -191,7 +193,7 @@ with c1:
                 if st.session_state.get("_ev_sig") != sig_key:
                     st.session_state["_ev_sig"] = sig_key
                     st.session_state["ev_company"], st.session_state["ev_year"], st.session_state["ev_theme"] = sig_key
-        e1, e2, e3 = st.columns([1.3, 0.9, 1.8], vertical_alignment="bottom")
+        e1, e2 = st.columns([1.4, 1], vertical_alignment="bottom")
         with e1:
             company = st.selectbox("Company", companies, format_func=ui.company_name, key="ev_company")
         with e2:
@@ -199,15 +201,13 @@ with c1:
             if st.session_state.get("ev_year") not in cyears:
                 st.session_state["ev_year"] = cyears[-1]
             year = st.selectbox("Year", cyears, key="ev_year")
+        e3, e4 = st.columns([1.4, 1], vertical_alignment="bottom")
         with e3:
             theme_code = st.selectbox("Theme", STRATEGIC_THEMES, format_func=lambda t: THEME_NAMES[t], key="ev_theme")
-        e4, e5, _ = st.columns([1.3, 0.9, 1.8], vertical_alignment="bottom")
         with e4:
-            tier = st.selectbox("Specificity", ["All", "Specific", "Moderate", "Vague"], key="ev_tier")
-        with e5:
-            n_show = st.number_input("Show", min_value=1, max_value=30, value=4, step=1)
+            tier = st.selectbox("Concreteness", ["All", "Specific", "Moderate", "Vague"], key="ev_tier")
         cell = shares[(shares.company == company) & (shares.year == year) & (shares.theme == theme_code)]
-        ev_all = compare.evidence(preds, company, theme_code, year, exclude_review)
+        ev_all = compare.evidence(preds, company, theme_code, year)
         ev_df = ev_all[ev_all.spec_tier == tier] if tier != "All" and "spec_tier" in ev_all else ev_all
         if cell.empty or ev_df.empty:
             ui.empty_state("No matching passages.")
@@ -217,8 +217,12 @@ with c1:
             st.markdown(f'<p class="sl-meta"><span class="num">{int(r["count"])}</span> of '
                         f'<span class="num">{int(r["strategic_total"])}</span> strategy passages · '
                         f'<span class="num">{r["share"] * 100:.0f}%</span>{shown}</p>', unsafe_allow_html=True)
-            for _, row in ev_df.head(int(n_show)).iterrows():
+            for _, row in ev_df.head(3).iterrows():
                 ui.quote(row)
+            if len(ev_df) > 3:
+                with st.expander(f"{min(len(ev_df), 13) - 3} more passages"):
+                    for _, row in ev_df.iloc[3:13].iterrows():
+                        ui.quote(row)
             cols_out = [c for c in ["passage_id", "company", "year", "section", "page", "pred", "confidence",
                                     "specificity", "spec_tier", "spec_signals", "text"] if c in ev_df]
             st.download_button("CSV", ev_df[cols_out].to_csv(index=False).encode("utf-8"), icon=":material/download:",
@@ -229,7 +233,7 @@ with c2:
         if yoy.empty:
             ui.empty_state("Needs two years for at least one company.")
         else:
-            yci = uncertainty.yoy_ci(preds, yoy, exclude_review=exclude_review)
+            yci = uncertainty.yoy_ci(preds, yoy)
             lim = max(abs(yci[["ci_lo", "ci_hi"]]).max().max(), 1)
 
             def ci_svg(r, w=72, h=14):
@@ -253,5 +257,5 @@ with c2:
                                 f"<td>{ci_svg(r)}</td></tr>")
             st.markdown("<table class='sl-table'><thead><tr><th>Theme</th><th class='r'>Share</th><th class='r'>Δ pp</th>"
                         f"<th>CI</th></tr></thead><tbody>{''.join(rows)}</tbody></table>", unsafe_allow_html=True)
-            st.markdown('<p class="sl-meta">Bold = interval excludes zero. Grey = within noise.</p>',
+            st.markdown('<p class="sl-meta">Coloured = a real shift (95% interval excludes zero). Grey = within noise.</p>',
                         unsafe_allow_html=True)

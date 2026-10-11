@@ -25,9 +25,8 @@ ui.kpi_cards([
     {"label": "Accuracy", "value": f"{t['accuracy']:.0%}", "sub": f"keywords {b['accuracy']:.0%}"},
     {"label": "vs keyword baseline", "value": f"+{t['macro_f1'] - b['macro_f1']:.2f}", "sub": f"baseline {b['macro_f1']:.2f}"},
 ])
-with ui.card("kf", "Key finding"):
-    st.markdown(f'<p style="font-size:14px;line-height:1.65;margin:0">{html.escape(m["key_finding"])}</p>',
-                unsafe_allow_html=True)
+with ui.card("kf", "Key audit findings", meta="from the held-out test set"):
+    ui.findings(audit.key_findings(m))
 
 tab1, tab2, tab3, tab4 = st.tabs(["Performance", "Robustness", "Explainability", "Errors"])
 
@@ -36,7 +35,7 @@ with tab1:
     with c1:
         with ui.card("cmp", "Models", meta="same test set"):
             rows = "".join(
-                f"<tr><td>{html.escape(r['system'])} {ui.pill('main', 'good') if r['note'] == 'main model' else ''}</td>"
+                f"<tr><td>{html.escape(ui.system_name(r['system']))} {ui.pill('main', 'good') if r['note'] == 'main model' else ''}</td>"
                 f"<td class='r'>{r['accuracy']:.2f}</td><td class='r'><b>{r['macro_f1']:.2f}</b></td>"
                 f"<td class='r sl-small'>{r['macro_f1_ci'][0]:.2f}–{r['macro_f1_ci'][1]:.2f}</td></tr>" for r in cmp)
             st.markdown("<table class='sl-table'><thead><tr><th>System</th><th class='r'>Acc</th><th class='r'>Macro-F1</th>"
@@ -44,13 +43,14 @@ with tab1:
             d = m["model_choice"].get("embedding_minus_tfidf")
             if d:
                 ui.callout(f"Embeddings vs TF-IDF: <b>{d['diff']:+.2f}</b> (CI {d['ci'][0]:+.2f} to {d['ci'][1]:+.2f}). "
-                           "Tied, so the explainable model is kept.")
+                           "A tie, so we keep the model whose every decision can be traced to words.")
     with c2:
         with ui.card("setup", "Setup"):
             model, _ = ui.load_model()
             vocab = len(model.named_steps["tfidf"].get_feature_names_out()) if model is not None else 0
-            spec = [("Input", "masked text"), ("Features", f"TF-IDF 1–2 grams · {vocab:,} terms"),
-                    ("Classifier", "logistic regression, balanced"), ("C", f"{m['model']['best_C']} (5-fold CV)"),
+            spec = [("Input", "names, numbers hidden"),
+                    ("Features", f"TF-IDF · {vocab:,} words + pairs"),
+                    ("Classifier", "logistic regression"), ("C", f"{m['model']['best_C']} (5-fold CV)"),
                     ("Split", f"{m['dataset']['n_train']} / {m['dataset']['n_test']} stratified"),
                     ("Flag", f"confidence < {thr:.2f}")]
             st.markdown("<table class='sl-table'><tbody>" + "".join(

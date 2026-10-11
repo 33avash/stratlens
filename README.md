@@ -1,47 +1,49 @@
 # StratLens
 
-**What do Indian FMCG companies emphasise when they describe their strategy, and how concretely?**
+**An NLP tool that reads FMCG annual reports and shows what each company emphasises in its strategy, how concretely, and what changed year to year.**
 
-StratLens reads the Chairman/CEO letter and MD&A of annual reports, classifies every passage into one of six strategy themes (or Other), and compares each company's **share of narrative** per theme across companies and years. Every number links back to the passages behind it.
+Annual reports run to 250–600 pages; the strategy story is about 20 of them. StratLens extracts the Chairman's letter and MD&A, sorts every passage into six strategy themes with a trained text classifier, and compares the themes' shares across HUL, Dabur and Nestlé India. Every number links back to the sentences behind it.
 
 ![Overview](docs/screenshots/overview.png)
 
-> Shares measure disclosure emphasis, not spending, execution or results.
+> Shares measure what companies choose to talk about, not what they spend or achieve.
+
+## The NLP at each step
+
+| # | Step | NLP technique |
+|---|---|---|
+| 1 | Read | Text extraction from PDF, with page numbers |
+| 2 | Clean | Text preprocessing with regular expressions |
+| 3 | Split | Sentence segmentation and tokenisation into 8–70 word passages |
+| 4 | Hide names | Entity masking: company, brand, number and year become placeholders |
+| 5 | Words → numbers | Bag-of-words → TF-IDF on words and word pairs (n-grams) |
+| 6 | Classify | Supervised text classification (logistic regression), with a confidence score |
+| 7 | How concrete | Named Entity Recognition (spaCy) + regex scoring of figures, dates and commitments |
+| 8 | Ask and briefs | Retrieval (BM25 + sentence embeddings) and an LLM that writes cited answers |
+| 9 | Check | Precision, recall, F1, subgroup audit, word-level explainability |
+
+The app's **How it works** page shows this table and lets you run any sentence through every step.
 
 ## Results
 
-5 reports (HUL FY25–26, Dabur FY25–26, Nestlé India FY26) → 1,184 passages → 885 labelled (708 train / 177 held-out test).
+5 reports → 1,184 passages → 885 labelled (708 train / 177 unseen test).
 
-| Model (same held-out test set) | Accuracy | Macro-F1 | 95% CI |
+| Model (same 177 unseen passages) | Accuracy | Macro-F1 | 95% CI |
 |---|---|---|---|
-| **TF-IDF + logistic regression, masked** (served) | 0.81 | **0.77** | 0.69–0.84 |
-| MiniLM embeddings + logistic regression, masked | 0.79 | 0.77 | 0.69–0.83 |
-| TF-IDF + logistic regression, unmasked | 0.81 | 0.78 | 0.69–0.84 |
-| Keyword baseline | 0.49 | 0.49 | 0.41–0.55 |
+| **Word-weight classifier (TF-IDF)**, served | 0.81 | **0.77** | 0.69–0.84 |
+| Meaning-based classifier (MiniLM embeddings) | 0.79 | 0.77 | 0.69–0.83 |
+| Keyword matching (lexicon) | 0.49 | 0.49 | 0.41–0.55 |
 
-Embeddings tie with TF-IDF (paired difference −0.01, CI −0.07 to +0.06), so the model that can be explained term by term is served.
+Embeddings tie with TF-IDF, so the model whose decisions trace back to words is served.
 
-**Audit findings**
-- **House style:** masking names, brands and numbers doesn't change theme accuracy, but the company is still **79%** identifiable from masked text (chance 49%). Cross-company differences may partly reflect writing style.
-- **Error direction:** the largest group of errors (15 of 34) is strategy passages predicted as Other; the reverse happens 7 times. Theme shares are likely conservative.
-- **Nestlé India** scores lower (macro-F1 0.44 vs 0.82 for HUL), but on only n = 25 test passages, so this is indicative.
+**What we found**
+- Dabur leads with brand-building (about a third of its strategy talk); HUL gives sustainability about three times the space of its peers; Nestlé India leans on distribution.
+- The only year-on-year shift beyond noise is Dabur's digital & e-commerce share, 6% → 14%.
 
-**Finding:** the only year-over-year shift that clears bootstrap noise is Dabur's digital & e-commerce share, 6% → 14%.
-
-## How it works
-
-```mermaid
-flowchart LR
-  A[Extract<br/>PyMuPDF] --> B[Clean] --> C[Segment<br/>8–70 words] --> D[Mask<br/>names · brands · numbers] --> E[TF-IDF<br/>1–2 grams] --> F[Logistic<br/>regression] --> G[Confidence<br/>flag below 0.45] --> H[Theme shares<br/>+ bootstrap CIs]
-  C --> I[spaCy NER + rules] --> J[Specificity 0–5]
-  C --> K[BM25 + MiniLM<br/>rank fusion] --> L[Gemini: Ask<br/>cited answers]
-  H --> M[Gemini: Briefs<br/>prose only]
-  J --> M
-```
-
-The classifier produces every label and number. The optional LLM (Gemini) only writes prose from computed figures and answers questions from retrieved passages; numbers it writes are checked against the data, and it refuses when nothing relevant is retrieved. The app's **How it works** page has an inspector that runs any sentence through each step.
-
-![Pipeline inspector](docs/screenshots/how_it_works.png)
+**Key audit findings**
+- **House style leaks:** hiding names doesn't change accuracy, but the company is still 79% identifiable from masked text (chance 49%).
+- **Errors are conservative:** 15 of 34 errors miss a strategy passage, and 7 invent one.
+- **Nestlé India is weaker** (0.44 vs 0.82 for HUL) but rests on only 25 test passages.
 
 ## Quick start
 
@@ -60,7 +62,7 @@ Trained artefacts are committed, so the app runs without retraining or the sourc
 
 | Section | Page | What it shows |
 |---|---|---|
-| Analysis | Overview | Strategy fingerprint, per-report summary, how much vs how concretely, YoY shifts with 95% CIs, evidence passages |
+| Analysis | Overview | What we found, strategy fingerprint, how much vs how concretely, evidence passages, YoY shifts with 95% CIs |
 | | Briefs | One-page brief per report or a 2–3 company comparison; HTML/PDF export |
 | | Ask | Question → hybrid retrieval over all passages → cited answer |
 | Data | Upload | Classify a new report (PDF/TXT) and add it to the Overview |

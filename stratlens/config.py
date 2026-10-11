@@ -45,3 +45,11 @@ STRATEGIC_THEMES = [t for t in THEMES if t != "OTHER"]
 
 COMPANY_NAMES = {"HUL": "Hindustan Unilever", "DABUR": "Dabur India", "NESTLE": "Nestlé India"}
 SECTION_NAMES = {"LETTER": "Chairman/CEO letter", "MDA": "MD&A"}
+
+# Plain names for the systems in metrics.json (technique in brackets).
+SYSTEM_NAMES = {
+    "TF-IDF + LR (masked)": "Word-weight classifier (TF-IDF)",
+    "MiniLM embeddings + LR (masked)": "Meaning-based classifier (MiniLM embeddings)",
+    "TF-IDF + LR (unmasked)": "Word-weight classifier, names not hidden",
+    "Keyword baseline": "Keyword matching (lexicon)",
+}

@@ -124,3 +124,15 @@ table.sl-table tr.grp td { color: var(--muted); font-size: 12px; padding-top: 12
 .sl-flow .edge { stroke: var(--muted); stroke-width: 1.3; fill: none; }
 .sl-flow .lane { fill: var(--muted); font-size: 10.5px; font-family: var(--mono); letter-spacing: .05em; }
 .sl-flow marker path { fill: var(--muted); }
+
+/* numbered findings (Overview, Evaluation) */
+.sl-finds { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.sl-find { display: flex; gap: 10px; background: var(--subtle); border-radius: 10px; padding: 12px 14px; }
+.sl-find > b { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--card); font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.sl-find .h { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 4px; }
+.sl-find .d { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+/* NLP step table */
+table.sl-table td.nlp { font-weight: 600; color: var(--accent); white-space: nowrap; }
+table.sl-table td.nlp .unit { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+table.sl-table td.nlp { white-space: normal; }
+.sl-para { font-size: 15px; line-height: 1.65; color: var(--text); margin: 0 0 8px 0; max-width: 78ch; }

@@ -163,3 +163,29 @@ def key_finding(m: dict) -> str:
         parts.append(f"By {dim.lower()}, {_name(lo['group'])} scores macro-F1 {lo['macro_f1']:.2f}{_ci(lo)} against "
                      f"{hi['macro_f1']:.2f}{_ci(hi)} for {_name(hi['group'])}.{small}")
     return " ".join(parts)
+
+
+def key_findings(m: dict) -> list[tuple[str, str]]:
+    """The key finding as short (headline, one-line detail) pairs for slides and the app; numbers from metrics.json."""
+    out = []
+    mk = m.get("masking")
+    if mk:
+        p = mk["company_probe"]
+        out.append((f"Writing style gives the company away ({p['masked']:.0%})",
+                    f"Hiding names, brands and numbers doesn't hurt theme accuracy, yet a classifier still guesses the "
+                    f"company {p['masked']:.0%} of the time (chance {p['majority_baseline']:.0%}). Cross-company "
+                    "differences may partly be house style."))
+    ed = error_direction(m["test"]["confusion"])
+    if ed["total"]:
+        out.append((f"It misses strategy more than it invents it ({ed['strategic_to_other']} vs "
+                    f"{ed['other_to_strategic']})",
+                    f"Of {ed['total']} test errors, {ed['strategic_to_other']} are strategy passages called Other and "
+                    f"{ed['other_to_strategic']} go the other way, so theme shares are, if anything, understated."))
+    clear = clearest_gap(m["subgroups"])
+    if clear:
+        _, _, lo, hi = clear
+        small = f" on only {lo['n']} test passages, so it's a flag, not a verdict" if lo["too_small"] else ""
+        out.append((f"Weaker on {_name(lo['group'])} ({lo['macro_f1']:.2f} vs {hi['macro_f1']:.2f})",
+                    f"{_name(lo['group'])} scores macro-F1 {lo['macro_f1']:.2f}{_ci(lo)} against "
+                    f"{hi['macro_f1']:.2f}{_ci(hi)} for {_name(hi['group'])}{small}."))
+    return out
