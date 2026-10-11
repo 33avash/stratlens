@@ -1,0 +1,39 @@
+{
+ "file": "godrej_FY2026.pdf",
+ "page_count": 580,
+ "pages_kept": 110,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 33,
+   "end_page": 49,
+   "n_pages": 17,
+   "method": "override",
+   "chars": 32837,
+   "starts_with": "A Letter to Our Shareholders Dear Shareholders, I hope this note finds you well."
+  },
+  {
+   "section": "MDA",
+   "start_page": 50,
+   "end_page": 63,
+   "n_pages": 14,
+   "method": "override",
+   "chars": 30257,
+   "starts_with": "Inputs Business Process Financial Capital y Equity y Increased spends on brands "
+  },
+  {
+   "section": "MDA",
+   "start_page": 81,
+   "end_page": 159,
+   "n_pages": 79,
+   "method": "override",
+   "chars": 119629,
+   "starts_with": "Category develop existing portfolio 80 Funded by radical simpliﬁcation 112 Peopl"
+  }
+ ],
+ "n_dropped": 651,
+ "company": "GODREJ",
+ "year": "FY2026",
+ "n_passages": 639,
+ "built": "2026-10-11"
+}

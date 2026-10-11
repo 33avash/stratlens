@@ -1,6 +1,6 @@
 # Name masking gazetteer. Every term is replaced before TF-IDF (company -> __company__, brand -> __brand__),
 # so the classifier learns themes, not authorship. Matching is case-sensitive and whole-word.
-# Ambiguous everyday words (Real, Red, Treat, Magic, Expert, Fab, Renew, Bourbon) are listed only inside a
+# Ambiguous everyday words (Real, Red, Treat, Magic, Expert, Renew, Bourbon) are listed only inside a
 # multi-word brand. Brands for MARICO, BRITANNIA and GODREJ were drafted for review: check them against the PDFs.
 # Signature phrases (Company page) also drop every term listed here.
 company_terms:
@@ -293,3 +293,4 @@ brands:
   - Inecto
   - Renew Keratin
   - Spic Fresh
+  - Fab

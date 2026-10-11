@@ -1,0 +1,21 @@
+{
+ "file": "britannia_FY2026.pdf",
+ "page_count": 189,
+ "pages_kept": 7,
+ "sections": [
+  {
+   "section": "MDA",
+   "start_page": 35,
+   "end_page": 41,
+   "n_pages": 7,
+   "method": "override",
+   "chars": 61761,
+   "starts_with": "66 67 | Britannia Industries Limited | Annual Report 2025-26 | Financial Stateme"
+  }
+ ],
+ "n_dropped": 51,
+ "company": "BRITANNIA",
+ "year": "FY2026",
+ "n_passages": 171,
+ "built": "2026-10-11"
+}

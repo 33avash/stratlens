@@ -1,0 +1,39 @@
+{
+ "file": "nestle_FY2025.pdf",
+ "page_count": 313,
+ "pages_kept": 8,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 31,
+   "end_page": 32,
+   "n_pages": 2,
+   "method": "override",
+   "chars": 14800,
+   "starts_with": "Chairman's Message As I write my last shareholder letter, I feel overwhelmed wit"
+  },
+  {
+   "section": "MDA",
+   "start_page": 66,
+   "end_page": 69,
+   "n_pages": 4,
+   "method": "override",
+   "chars": 19936,
+   "starts_with": "Your Company and NESPRESSO S.A. have appointed M/s. Thakral Innovations Pvt. Ltd"
+  },
+  {
+   "section": "MDA",
+   "start_page": 217,
+   "end_page": 218,
+   "n_pages": 2,
+   "method": "override",
+   "chars": 8677,
+   "starts_with": "All correspondence by members related to investor service request may be forward"
+  }
+ ],
+ "n_dropped": 54,
+ "company": "NESTLE",
+ "year": "FY2025",
+ "n_passages": 153,
+ "built": "2026-10-11"
+}

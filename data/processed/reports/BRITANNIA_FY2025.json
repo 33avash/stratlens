@@ -1,0 +1,21 @@
+{
+ "file": "britannia_FY2025.pdf",
+ "page_count": 192,
+ "pages_kept": 5,
+ "sections": [
+  {
+   "section": "MDA",
+   "start_page": 39,
+   "end_page": 43,
+   "n_pages": 5,
+   "method": "override",
+   "chars": 42542,
+   "starts_with": "70 Corporate Overview | Statutory Reports | Financial Statements 69 Annual Repor"
+  }
+ ],
+ "n_dropped": 43,
+ "company": "BRITANNIA",
+ "year": "FY2025",
+ "n_passages": 127,
+ "built": "2026-10-11"
+}

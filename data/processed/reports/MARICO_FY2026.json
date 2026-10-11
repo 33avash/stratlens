@@ -1,0 +1,30 @@
+{
+ "file": "marico_FY2026.pdf",
+ "page_count": 295,
+ "pages_kept": 10,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 28,
+   "end_page": 32,
+   "n_pages": 5,
+   "method": "override",
+   "chars": 31158,
+   "starts_with": "Innovation remains integral to Marico’s growth journey. During FY26, we continue"
+  },
+  {
+   "section": "MDA",
+   "start_page": 132,
+   "end_page": 136,
+   "n_pages": 5,
+   "method": "override",
+   "chars": 49801,
+   "starts_with": "ECONOMIC SCENARIO Global At the start of the year under review, the global econo"
+  }
+ ],
+ "n_dropped": 81,
+ "company": "MARICO",
+ "year": "FY2026",
+ "n_passages": 249,
+ "built": "2026-10-11"
+}

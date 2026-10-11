@@ -1,0 +1,39 @@
+{
+ "file": "godrej_FY2025.pdf",
+ "page_count": 597,
+ "pages_kept": 131,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 38,
+   "end_page": 58,
+   "n_pages": 21,
+   "method": "override",
+   "chars": 31795,
+   "starts_with": "35 A Letter to Our Shareholders Dear Shareholders, Thank you for taking the time"
+  },
+  {
+   "section": "MDA",
+   "start_page": 61,
+   "end_page": 85,
+   "n_pages": 25,
+   "method": "override",
+   "chars": 51468,
+   "starts_with": "Our business model Inputs Financial Capital • Equity • Increased spends on brand"
+  },
+  {
+   "section": "MDA",
+   "start_page": 96,
+   "end_page": 180,
+   "n_pages": 85,
+   "method": "override",
+   "chars": 125163,
+   "starts_with": "1 Category develop existing portfolio"
+  }
+ ],
+ "n_dropped": 2666,
+ "company": "GODREJ",
+ "year": "FY2025",
+ "n_passages": 675,
+ "built": "2026-10-11"
+}

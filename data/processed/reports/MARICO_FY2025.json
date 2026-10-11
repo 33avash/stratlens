@@ -1,0 +1,30 @@
+{
+ "file": "marico_FY2025.pdf",
+ "page_count": 256,
+ "pages_kept": 10,
+ "sections": [
+  {
+   "section": "LETTER",
+   "start_page": 9,
+   "end_page": 12,
+   "n_pages": 4,
+   "method": "override",
+   "chars": 30865,
+   "starts_with": "Charting the Next Chapter: Agile in Action, Resilient by Design a future where i"
+  },
+  {
+   "section": "MDA",
+   "start_page": 100,
+   "end_page": 105,
+   "n_pages": 6,
+   "method": "override",
+   "chars": 64359,
+   "starts_with": "Management Discussion & Analysis ECONOMIC SCENARIO Global At the turn of the cal"
+  }
+ ],
+ "n_dropped": 71,
+ "company": "MARICO",
+ "year": "FY2025",
+ "n_passages": 297,
+ "built": "2026-10-11"
+}
