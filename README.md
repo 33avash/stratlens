@@ -1,105 +1,103 @@
 # StratLens
 
-**An NLP tool that reads FMCG annual reports and shows what each company emphasises in its strategy, how concretely, and what changed year to year.**
+**See what India's FMCG leaders emphasise in their strategy and what changed this year.**
 
-Annual reports run to 250–600 pages; the strategy story is about 20 of them. StratLens extracts the Chairman's letter and MD&A, sorts every passage into six strategy themes with a trained text classifier, and compares the themes' shares across HUL, Dabur and Nestlé India. Every number links back to the sentences behind it.
+Annual reports run to 200–600 pages and the strategy story is buried in about 20 of them. StratLens reads only the Chairman's letter and the MD&A of 12 reports (Dabur, Marico, Hindustan Unilever, Godrej Consumer Products, Nestlé India and Britannia; FY2025 and FY2026). It sorts every passage into six strategy themes with a trained text classifier and scores how concrete each passage is. It then shows, in plain English, where each company leans compared with its peers, which shifts are bigger than chance, and the exact passages behind every number. An LLM writes sentences and cited answers. It never labels passages or computes a number.
 
-![Overview](docs/screenshots/overview.png)
+![Home](docs/screenshots/home.png)
 
-> Shares measure what companies choose to talk about, not what they spend or achieve.
+## How it works
 
-## The NLP at each step
+**Read → Clean → Split → Classify theme → Score concreteness → Compare**
 
-| # | Step | NLP technique |
-|---|---|---|
-| 1 | Read | Text extraction from PDF, with page numbers |
-| 2 | Clean | Text preprocessing with regular expressions |
-| 3 | Split | Sentence segmentation and tokenisation into 8–70 word passages |
-| 4 | Hide names | Entity masking: company, brand, number and year become placeholders |
-| 5 | Words → numbers | Bag-of-words → TF-IDF on words and word pairs (n-grams) |
-| 6 | Classify | Supervised text classification (logistic regression), with a confidence score |
-| 7 | How concrete | Named Entity Recognition (spaCy) + regex scoring of figures, dates and commitments |
-| 8 | Ask and briefs | Retrieval (BM25 + sentence embeddings) and an LLM that writes cited answers |
-| 9 | Check | Precision, recall, F1, subgroup audit, word-level explainability |
+| Step | NLP technique |
+|---|---|
+| Read | Text extraction with page numbers (PyMuPDF); Chairman/CEO letter and MD&A only |
+| Clean | Regular expressions: running headers, page numbers, tables and legal boilerplate removed |
+| Split | Sentence segmentation and tokenisation into 8–70 word passages |
+| Classify theme | Company, brand, number and year masking → TF-IDF on words and word pairs → logistic regression (6 themes + Other) |
+| Score concreteness | spaCy named entity recognition + regex: figures, dates, named initiatives, commitments (0–5) |
+| Compare | Theme shares per report; a difference counts only if its 95% bootstrap interval excludes zero |
+| What's new / promises | MiniLM sentence embeddings (meaning matching) + spaCy DATE/PERCENT/MONEY entities |
+| Ask | Retrieval (BM25 + MiniLM, rank fusion) → Gemini writes an answer that cites the passages |
 
-The app's **How it works** page shows this table and lets you run any sentence through every step.
+Everything is computed offline by one command; the app only reads the results, so pages load in about a second and the demo works without internet.
+
+## What the app shows
+
+| Page | What you get |
+|---|---|
+| **Home** | Three findings (the biggest lean against peers, the biggest real year-on-year shift, the most concrete company) and a clickable fingerprint of 6 companies × 6 themes |
+| **Company** | A 3-sentence brief (PDF), benchmark against peers and all companies, what's new and what was dropped this year, measurable promises and whether they were mentioned again, signature phrases, and the evidence behind every theme |
+| **Compare** | Any two reports: which theme differences are real and which are noise, topics found in only one report, concreteness by theme |
+| **Ask** | A question in plain English → passages → a cited answer |
+| **Add a report** | Run another annual report through the same pipeline and see it next to the six |
+| **How it works** | The step-by-step pipeline inspector, accuracy, and limits |
+
+⋮ → **Demo mode** (or open `?demo=1`) walks Home → Company → Compare → Ask → How it works with a Next button.
+
+![Company](docs/screenshots/company.png)
 
 ## Results
 
-5 reports → 1,184 passages → 885 labelled (708 train / 177 unseen test).
+12 reports → 4,226 passages → 1,687 about strategy. The classifier was trained on 708 labelled passages from Dabur, HUL and Nestlé India and tested on 177 it never saw:
 
-| Model (same 177 unseen passages) | Accuracy | Macro-F1 | 95% CI |
-|---|---|---|---|
-| **Word-weight classifier (TF-IDF)**, served | 0.81 | **0.77** | 0.69–0.84 |
-| Meaning-based classifier (MiniLM embeddings) | 0.79 | 0.77 | 0.69–0.83 |
-| Keyword matching (lexicon) | 0.49 | 0.49 | 0.41–0.55 |
+| Model (same 177 test passages) | Macro-F1 | 95% CI |
+|---|---|---|
+| **Word-weight classifier (TF-IDF + logistic regression)**, used | **0.77** | 0.69–0.84 |
+| Meaning-based classifier (MiniLM embeddings) | 0.77 | 0.69–0.83 |
+| Keyword matching | 0.49 | 0.41–0.55 |
 
-Embeddings tie with TF-IDF, so the model whose decisions trace back to words is served.
-
-**What we found**
-- Dabur leads with brand-building (about a third of its strategy talk); HUL gives sustainability about three times the space of its peers; Nestlé India leans on distribution.
-- The only year-on-year shift beyond noise is Dabur's digital & e-commerce share, 6% → 14%.
-
-**Key audit findings**
-- **House style leaks:** hiding names doesn't change accuracy, but the company is still 79% identifiable from masked text (chance 49%).
-- **Errors are conservative:** 15 of 34 errors miss a strategy passage, and 7 invent one.
-- **Nestlé India is weaker** (0.44 vs 0.82 for HUL) but rests on only 25 test passages.
+The two classifiers tie, so the app uses the one whose every decision can be traced to words. Marico, Britannia and Godrej were never in training, so they are an honest test of generalisation: `python -m stratlens.audit` scores the model on 90 hand-labelled passages from them (see Limits).
 
 ## Quick start
 
 Python 3.11+.
 
 ```bash
-pip install -r requirements.txt     # CPU-only torch; includes the spaCy model
+pip install -r requirements.txt     # CPU-only PyTorch; includes the spaCy model
 streamlit run app.py
 ```
 
-Trained artefacts are committed, so the app runs without retraining or the source PDFs. The first run downloads `all-MiniLM-L6-v2` (~90 MB).
+Processed data and the trained model are in the repository, so the app runs without the PDFs. The first run downloads the MiniLM model (~90 MB); after that the app works offline.
 
-**Optional AI writing:** copy `.env.example` to `.env` and set `GEMINI_API_KEY` (optional `GEMINI_MODEL`, default `gemini-3.5-flash`). Without a key, everything works with template text.
+**Optional AI writing:** copy `.env.example` to `.env` and set `GEMINI_API_KEY`. Without a key, or offline, every page works: the text is written from the data by templates, and Ask shows the passages without a written answer. AI outputs are cached on disk, so anything generated once works offline afterwards.
 
-## App
-
-| Section | Page | What it shows |
-|---|---|---|
-| Analysis | Overview | What we found, strategy fingerprint, how much vs how concretely, evidence passages, YoY shifts with 95% CIs |
-| | Briefs | One-page brief per report or a 2–3 company comparison; HTML/PDF export |
-| | Ask | Question → hybrid retrieval over all passages → cited answer |
-| Data | Upload | Classify a new report (PDF/TXT) and add it to the Overview |
-| Model | How it works | Pipeline diagram, stage table, step-by-step inspector |
-| | Evaluation | Model comparison, robustness (subgroups, masking, author probe, cross-year), explainability, errors |
-| | Model card | Generated `MODEL_CARD.md` |
-
-![Evaluation](docs/screenshots/evaluation.png)
-
-## Reproduce
-
-Put the reports in `data/raw/` as `COMPANY_FYyyyy.pdf` (not in the repo; page ranges are in `config/section_overrides.csv`), then:
+## Add a report
 
 ```bash
-python scripts/build_corpus.py   # extract → clean → segment → data/processed/corpus.csv
-python train.py                  # tune, compare, audit → models/, reports/metrics.json, MODEL_CARD.md
-python -m pytest -q              # 58 tests
+# 1. save it as data/raw/{company}_FY{yyyy}.pdf, e.g. britannia_FY2027.pdf
+python -m stratlens.build            # 2. extract, classify, score, compare (skips unchanged reports)
+streamlit run app.py                 # 3. it appears on every page
 ```
+
+The build prints the pages it kept for the letter and the MD&A. If it cannot find them reliably it skips the report with a warning; add the page ranges to `config/section_overrides.csv` and run it again. A new company needs a line in `config/companies.yaml` (name, peer group) and its brands in `config/gazetteer.yaml`. For a one-off look without building, use **Add a report** in the app.
+
+## Data sources
+
+Statutory annual reports filed with the National Stock Exchange of India; every file and URL is listed in [docs/data_sources.md](docs/data_sources.md). The PDFs are not in the repository. Report-specific choices: Britannia publishes no Chairman/CEO letter, and Godrej's MD&A is its whole integrated report (the TCFD climate section is excluded).
+
+## Limits
+
+- **Emphasis, not spending.** A theme's share is how much of the strategy text talks about it. It is not money spent, execution or a ranking.
+- **Writing style leaks.** Even with names, brands and numbers hidden, a classifier guesses the company 79% of the time (chance 49%), so some differences between companies may be house style.
+- **Weaker on some companies.** On the original test set, Nestlé India scores macro-F1 0.44 on only 25 passages, against about 0.8 for Dabur and HUL. Marico, Britannia and Godrej were never in training and the model is less confident on them (20–47% of their passages are flagged as low confidence, against 8–11% for the others). The Company page warns when this applies.
+- **Labels are partly AI-drafted.** The 885 training labels were drafted by an AI assistant following [written guidelines](docs/labelling_guidelines.md). A hand-labelled check of 190 passages (`data/labels/verify_*.csv`, scored by `python -m stratlens.audit`) measures how far they can be trusted.
+- **Only the letter and the MD&A are read.** Sustainability reports and notes to the accounts are ignored, and Godrej's integrated MD&A makes its sustainability share not like-for-like.
+- **Bag of words.** Negation, tense and intent are invisible to word counts. Concreteness is rule-based (48 of 60 spot-checked tiers agreed). Promises need an explicit figure plus a deadline or commitment, so they are rare: four reports have none.
 
 ## Repository
 
 ```
 app.py, views/        Streamlit app (one file per page)
-stratlens/            pipeline: extract, preprocess, masking, model, explain, audit, uncertainty,
-                      specificity, compare, report, trace; llm/ (Gemini client, prompts, retrieval)
-train.py, scripts/    training, corpus build, labelling, benchmark, model card
-data/                 corpus, labels, splits, predictions, caches (raw PDFs git-ignored)
-models/, reports/     trained classifier, metrics.json, error analysis
-docs/                 write-up, pitch, labelling guidelines, specificity spot-check
+stratlens/            pipeline and analysis: build, extract, sections, preprocess, masking, model, specificity,
+                      analytics, features (what's new, promises, signature phrases), insights, llm/ (Gemini, retrieval)
+config/               companies, themes, gazetteer, app copy and presets, section page ranges
+train.py              training and evaluation (reports/metrics.json, MODEL_CARD.md)
+data/                 processed passages, analytics, embeddings, caches, labels (raw PDFs git-ignored)
+docs/                 data sources, demo script, labelling guidelines, write-up, pitch
+archive/v1/           results of the first version, kept for comparison
 tests/                pytest suite
 ```
 
-## Limitations
-
-- **Labels** were AI-drafted following [`docs/labelling_guidelines.md`](docs/labelling_guidelines.md) and have **not been human-verified**. Scores measure agreement with those drafts.
-- **Small data:** 5 reports, 3 companies, 9–79 test passages per theme; Nestlé has one year only.
-- **Bag of words** misses negation, tense and intent.
-- **Specificity** is rule-based (48/60 tiers agreed in two spot-checks) and favours brand-by-brand writing.
-
-More: [model card](MODEL_CARD.md) · [write-up](docs/writeup.md) · [pitch](docs/pitch.md)
+More: [model card](MODEL_CARD.md) · [demo script](docs/demo_script.md) · [write-up](docs/writeup.md) · [pitch](docs/pitch.md)

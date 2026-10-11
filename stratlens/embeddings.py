@@ -19,12 +19,26 @@ CACHE = DATA / "cache" / "emb_minilm.npz"
 DIM = 384
 
 
+def _cached_locally() -> bool:
+    """True if the model's files are already in the Hugging Face cache."""
+    import os
+    from pathlib import Path
+    hub = os.environ.get("HF_HUB_CACHE") or os.path.join(
+        os.environ.get("HF_HOME") or os.path.join(Path.home(), ".cache", "huggingface"), "hub")
+    snap = Path(hub) / ("models--" + MODEL_NAME.replace("/", "--")) / "snapshots"
+    return snap.exists() and any(snap.glob("*/config.json"))
+
+
 @lru_cache(maxsize=1)
 def _encoder():
     import os
     os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
     os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    if _cached_locally():
+        # Model already downloaded: never contact the Hub (it would retry for ~30 s without internet).
+        # Must be set before huggingface_hub is imported, which reads it once.
+        os.environ.setdefault("HF_HUB_OFFLINE", "1")
     try:
         from sentence_transformers import SentenceTransformer
         from transformers.utils import logging as hf_logging

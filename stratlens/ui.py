@@ -193,6 +193,9 @@ def menu() -> None:
         if pick and pick != ("Dark" if dark else "Light"):
             st.session_state["_theme_switch"] = pick
             st.rerun()
+        if st.button("Demo mode", icon=":material/slideshow:", width="stretch",
+                     help="Walk through Home → Company → Compare → Ask → How it works with a Next button"):
+            start_demo()
         st.markdown("**About this data**")
         st.markdown(f'<div class="sl-about">{_md(_about())}</div>', unsafe_allow_html=True)
 
@@ -203,6 +206,72 @@ def _md(text: str) -> str:
     esc = html.escape(text)
     esc = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", esc)
     return "".join(f"<p>{p}</p>" for p in esc.split("\n\n"))
+
+
+# ---------- demo mode ----------
+PAGE_FILES = {"home": "views/home.py", "company": "views/company.py", "compare": "views/compare.py",
+              "ask": "views/ask.py", "add-report": "views/add_report.py", "how-it-works": "views/how_it_works.py"}
+
+
+def _go(step: int) -> None:
+    from .config import DEMO_STEPS
+    s = DEMO_STEPS[step]
+    st.switch_page(PAGE_FILES[s["page"]], query_params={**{k: str(v) for k, v in s.get("params", {}).items()},
+                                                        "demo": str(step + 1)})
+
+
+def start_demo() -> None:
+    """Warm every cache on the demo path (data, model, spaCy, embeddings), then open step 1."""
+    with st.spinner("Preparing the demo…"):
+        load_passages(), load_analytics(), load_features(), load_narratives(), load_ask_examples()
+        load_model(), load_embeddings(), load_metrics()
+        specificity._nlp()
+        from . import embeddings
+        embeddings.available()  # loads the sentence encoder once (~15 s) so a live Ask question is instant
+    _go(0)
+
+
+def demo_bar() -> None:
+    """Small fixed 'Next →' bar while ?demo=N is in the URL."""
+    from .config import DEMO_STEPS
+    try:
+        step = int(st.query_params.get("demo", 0)) - 1
+    except ValueError:
+        return
+    if not (0 <= step < len(DEMO_STEPS)):
+        return
+    with st.container(key="demo_bar"):
+        c1, c2, c3 = st.columns([5, 1.3, 1], vertical_alignment="center")
+        with c1:
+            st.markdown(f'<div class="sl-demo-l"><b>Demo {step + 1}/{len(DEMO_STEPS)}</b> · '
+                        f'{html.escape(DEMO_STEPS[step]["label"])}</div>', unsafe_allow_html=True)
+        with c2:
+            if step + 1 < len(DEMO_STEPS):
+                if st.button("Next →", type="primary", key="demo_next", width="stretch"):
+                    _go(step + 1)
+            else:
+                st.markdown('<div class="sl-demo-l">End of demo</div>', unsafe_allow_html=True)
+        with c3:
+            if st.button("Exit", key="demo_exit", width="stretch"):
+                st.query_params.pop("demo", None)
+                st.rerun()
+
+
+def sync_from_query(keys: dict[str, str]) -> None:
+    """Apply query parameters to widget state when they arrive from navigation (a link, demo mode, a preset),
+    without fighting the user's own widget changes. keys: {query param: session_state key}."""
+    qp = {k: st.query_params.get(k) for k in keys}
+    memo = "_qp_seen_" + "_".join(keys)
+    if qp != st.session_state.get(memo):
+        for k, sk in keys.items():
+            if qp[k] is not None:
+                st.session_state[sk] = qp[k]
+        st.session_state[memo] = qp
+
+
+def mark_query_seen(keys: dict[str, str]) -> None:
+    """Record the query parameters this page has just written itself (so sync_from_query ignores them)."""
+    st.session_state["_qp_seen_" + "_".join(keys)] = {k: st.query_params.get(k) for k in keys}
 
 
 def header(title: str, subtitle: str = "") -> None:
@@ -380,6 +449,17 @@ def fingerprint_grid(an: dict, mode: str) -> None:
 def passage(row, show_why: bool = True, anchor: str | None = None, label: str | None = None,
             show_theme: bool = False) -> None:
     """One evidence passage: text, page, 'why this theme' chips and a details toggle with the raw metadata."""
+    st.markdown(passage_html(row, show_why, anchor, label, show_theme), unsafe_allow_html=True)
+
+
+def passages_block(rows: pd.DataFrame, **kw) -> None:
+    """Several passages as one element (much faster to render than one element each)."""
+    if len(rows):
+        st.markdown("".join(passage_html(r, **kw) for _, r in rows.iterrows()), unsafe_allow_html=True)
+
+
+def passage_html(row, show_why: bool = True, anchor: str | None = None, label: str | None = None,
+                 show_theme: bool = False) -> str:
     color = THEME_COLORS.get(row["pred"], "#999")
     text = html.escape(clean(row["text"]))
     why = row.get("why") if isinstance(row.get("why"), list) else []
@@ -391,13 +471,13 @@ def passage(row, show_why: bool = True, anchor: str | None = None, label: str | 
                + f' · {html.escape(row["passage_id"])}')
     idattr = f' id="{anchor}"' if anchor else ""
     lab = f'<b class="mono">{html.escape(label)}</b> ' if label else ""
-    st.markdown(
+    return (
         f'<div class="sl-quote"{idattr} style="border-left-color:{color}"><div class="q">{lab}{text}</div>'
         f'<div class="m"><span>{html.escape(short(row["company"]))} {row["year"]} · p.{int(row["page"])}</span>'
         + (theme_label(row["pred"]) if show_theme else "")
         + (f'<span class="sl-why" title="Words that pushed the model towards this theme">why this theme: '
            f'{chips}</span>' if chips else "")
-        + f'<details><summary>details</summary>{details}</details></div></div>', unsafe_allow_html=True)
+        + f'<details><summary>details</summary>{details}</details></div></div>')
 
 
 def evidence_rows(passages: pd.DataFrame, company: str, year: str, theme_code: str) -> pd.DataFrame:

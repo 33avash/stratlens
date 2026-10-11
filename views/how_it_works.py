@@ -28,10 +28,17 @@ T = {  # hover definitions for the jargon used on this page
 }
 tip = lambda label, key=None: ui.tip(label, T[key or label])  # noqa: E731
 
-tab1, tab2, tab3 = st.tabs(["Pipeline", "Accuracy", "Limits"])
+TABS = ["Pipeline", "Accuracy", "Limits"]
+st.session_state.setdefault("hiw_tab", "Pipeline")
+if st.query_params.get("tab") in TABS:
+    ui.sync_from_query({"tab": "hiw_tab"})
+tab = st.segmented_control("Section", TABS, key="hiw_tab", label_visibility="collapsed") or "Pipeline"
+if st.query_params.get("tab") != tab:
+    st.query_params["tab"] = tab
+    ui.mark_query_seen({"tab": "hiw_tab"})
 
 # ======================================================================== pipeline
-with tab1:
+if tab == "Pipeline":
     ui.pipeline_strip(href=None)
     ui.note("<b>Gemini only writes sentences and answers from retrieved passages. It never labels passages or "
             "computes numbers.</b> Every theme comes from the trained classifier below, and every number on screen "
@@ -96,7 +103,7 @@ with tab1:
                 "inserted from the data after it writes, and Ask refuses when nothing relevant is found.")
 
 # ======================================================================== accuracy
-with tab2:
+if tab == "Accuracy":
     if m is None:
         ui.empty_state("No evaluation results yet.", "Run <code>python train.py</code>.")
     else:
@@ -116,7 +123,7 @@ with tab2:
         with c1:
             with ui.card("pc", "Per theme", meta="F1 on held-out passages (support in brackets)"):
                 st.plotly_chart(charts.per_theme_f1(m["test"]["per_class"], m["test"]["baseline_per_class"]),
-                                use_container_width=True, config=PLOTLY_CONFIG)
+                                width="stretch", config=PLOTLY_CONFIG)
         with c2:
             with ui.card("cmp", "Models compared", meta="same test passages"):
                 rows = "".join(
@@ -131,7 +138,7 @@ with tab2:
                 ui.callout("Meaning-based embeddings tie with word weights, so the model whose every decision can "
                            "be traced to words is the one used.")
             with ui.card("cm", "Where it goes wrong", meta="rows: correct theme · columns: model's theme"):
-                st.plotly_chart(charts.confusion(m["test"]["confusion"], 420), use_container_width=True,
+                st.plotly_chart(charts.confusion(m["test"]["confusion"], 420), width="stretch",
                                 config=PLOTLY_CONFIG)
 
         with ui.card("human", "Checked by hand: unseen companies and the AI-drafted labels",
@@ -188,7 +195,7 @@ with tab2:
                                file_name="StratLens_MODEL_CARD.md", mime="text/markdown", icon=":material/download:")
 
 # ======================================================================== limits
-with tab3:
+if tab == "Limits":
     lims = [("It measures emphasis, not spending.",
              "A theme's share is how much of the strategy text talks about it. It says nothing about money spent, "
              "execution or results, and it is not a ranking.")]

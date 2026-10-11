@@ -86,7 +86,7 @@ with ui.card("pages", "2 · Pages to read", meta=f"{doc.page_count:,} pages in t
                           [{"section": "LETTER", "start_page": None, "end_page": None},
                            {"section": "MDA", "start_page": None, "end_page": None}])
     edited = st.data_editor(
-        sec_df, num_rows="dynamic", hide_index=True, key=f"sec_{file_key}", use_container_width=False,
+        sec_df, num_rows="dynamic", hide_index=True, key=f"sec_{file_key}", width="content",
         column_config={
             "section": st.column_config.SelectboxColumn("Section", options=["LETTER", "MDA"], required=True),
             "start_page": st.column_config.NumberColumn("From page", min_value=1, max_value=doc.page_count, step=1),

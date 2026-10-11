@@ -1,7 +1,7 @@
 """StratLens entry point: streamlit run app.py"""
 import streamlit as st
 
-st.set_page_config(page_title="StratLens", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="StratLens", page_icon="assets/favicon.png", layout="wide", initial_sidebar_state="expanded")
 
 from stratlens import theme, ui  # noqa: E402  (after set_page_config)
 
@@ -25,4 +25,15 @@ pages = {
 
 logo = "logo_dark.svg" if theme.is_dark() else "logo.svg"
 st.logo(str(ui.ROOT / "assets" / logo), size="large")
-st.navigation(pages, position="sidebar").run()
+nav = st.navigation(pages, position="sidebar")
+if st.query_params.get("demo") == "1" and "demo_started" not in st.session_state:  # ?demo=1: warm caches first
+    st.session_state["demo_started"] = True
+    ui.start_demo()
+ui.demo_bar()
+import os, time  # noqa: E402,E401
+_t0 = time.perf_counter()
+try:
+    nav.run()
+finally:
+    if os.environ.get("STRATLENS_PROFILE"):
+        print(f"PROFILE {nav.url_path or 'home'} {time.perf_counter() - _t0:.3f}s", flush=True)

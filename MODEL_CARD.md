@@ -6,8 +6,9 @@
 Classifies passages from Indian FMCG annual reports (Chairman/CEO letter and MD&A) into six strategy themes plus Other, to compare disclosure emphasis across companies and years. Not a measure of spending, execution or performance.
 
 ### Data
-- **Reports:** Dabur India FY2025, Dabur India FY2026, Hindustan Unilever FY2025, Hindustan Unilever FY2026, Nestlé India FY2026. One year only: Nestlé India.
-- **Passages:** 1,184 kept after cleaning; 464 blocks dropped.
+- **Training reports:** Dabur India FY2025, Dabur India FY2026, Hindustan Unilever FY2025, Hindustan Unilever FY2026, Nestlé India FY2026.
+- **Reports analysed in the app:** 12 (Britannia Industries FY2025, Britannia Industries FY2026, Dabur India FY2025, Dabur India FY2026, Godrej Consumer Products FY2025, Godrej Consumer Products FY2026, Hindustan Unilever FY2025, Hindustan Unilever FY2026, Marico FY2025, Marico FY2026, Nestlé India FY2025, Nestlé India FY2026). Never in training: Britannia Industries, Godrej Consumer Products, Marico (an unseen-company test, scored by `python -m stratlens.audit`).
+- **Passages:** 4,226 across all reports after cleaning; 5,784 blocks dropped.
 - **Labels:** 885 passages (PROD 122 · DIST 70 · DIGI 65 · OPS 61 · SUST 45 · BRAND 129 · OTHER 393).
 - **Provenance:** labels were AI-drafted following the labelling guidelines (`docs/labelling_guidelines.md`) and have not been human-verified.
 
@@ -43,9 +44,9 @@ Top coefficients per theme and per-passage term contributions (tf-idf × coeffic
 
 ### Limitations
 1. **Labels:** AI-drafted following the labelling guidelines and not human-verified. Every score here measures agreement with those drafts, not with an expert.
-2. **Size:** 5 reports; 9–79 test passages per theme, so intervals are wide.
+2. **Size:** 5 training reports; 9–79 test passages per theme, so intervals are wide.
 3. **Representation:** bag of words misses negation, tense and intent.
-4. **Specificity:** rule-based; 26/30 and 22/30 tiers agreed with in two spot-checks (48/60 overall; misses run both ways, so the thresholds were kept). Spot-checks were done by the AI assistant, not a person. Brand mentions count as named initiatives (favours brand-by-brand writing); "targeted", "commitment to…" and version numbers such as "2.0" can over-score.
+4. **Concreteness:** rule-based; 26/30 and 22/30 tiers agreed with in two spot-checks (48/60 overall; misses run both ways, so the thresholds were kept). Spot-checks were done by the AI assistant, not a person. Brand mentions count as named initiatives (favours brand-by-brand writing); "targeted", "commitment to…" and version numbers such as "2.0" can over-score.
 5. **Errors:** 15 of 34 test errors are strategic passages predicted as Other (7 the reverse), so theme shares are likely conservative.
 6. **House style:** company identity is 79% predictable from masked text, so cross-company differences may partly reflect writing style.
 7. **Benchmark:** shares include training passages; YoY intervals ignore labelling error.
@@ -54,7 +55,7 @@ Top coefficients per theme and per-passage term contributions (tf-idf × coeffic
 An optional LLM (Gemini) writes brief prose from the classifier's computed figures and answers Ask questions from passages found by hybrid retrieval (BM25 + MiniLM embeddings, rank fusion). It does not classify passages or produce metrics; numbers it writes are checked against the data, and Ask refuses when nothing relevant is retrieved.
 
 ### App
-Analysis: Overview · Briefs · Ask. Data: Upload. Model: How it works (pipeline diagram and inspector) · Evaluation · Model card.
+Analyse: Home · Company · Compare · Ask. Data: Add a report. Model: How it works (pipeline inspector, accuracy, limits). Everything shown is precomputed by `python -m stratlens.build`.
 
 ### Not for
 Investment decisions, valuation, ranking companies, inferring actual spend, or other industries without re-validation.

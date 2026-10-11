@@ -79,6 +79,7 @@ APP = _yaml(CONFIG_DIR / "app.yaml")
 PIPELINE_STEPS = APP.get("pipeline", [])
 COMPARE_PRESETS = APP.get("compare_presets", [])
 ASK_EXAMPLES = APP.get("ask_examples", [])
+DEMO_STEPS = APP.get("demo", [])
 NARRATIVES_JSON = DATA / "processed" / "narratives.json"
 ASK_EXAMPLES_JSON = DATA / "processed" / "ask_examples.json"
 AUDIT_JSON = DATA / "processed" / "audit.json"

@@ -14,7 +14,7 @@ import pandas as pd
 
 from stratlens import audit
 from stratlens.config import (COMPANY_NAMES, CORPUS_CSV, DROPS_CSV, METRICS_JSON, MODEL_CARD, ROOT, SECTIONS_CSV,
-                              SYSTEM_NAMES, THEMES)
+                              SYSTEM_NAMES)
 
 SPOTCHECK_CSV = ROOT / "docs" / "specificity_spotcheck.csv"
 
@@ -33,13 +33,14 @@ def main() -> None:
     drops = pd.read_csv(DROPS_CSV)
     secs = pd.read_csv(SECTIONS_CSV)
     reports = secs[["company", "year"]].drop_duplicates().sort_values(["company", "year"])
+    trained = sorted(m["dataset"]["by_company_year"])  # "DABUR FY2025" ...
+    train_list = ", ".join(f"{COMPANY_NAMES.get(k.split()[0], k.split()[0])} {k.split()[1]}" for k in trained)
+    trained_cos = {k.split()[0] for k in trained}
+    unseen = sorted(set(reports.company) - trained_cos)
     report_list = ", ".join(f"{COMPANY_NAMES.get(c, c)} {y}" for c, y in reports.values)
-    years_per = reports.groupby("company").size()
-    one_year = [COMPANY_NAMES.get(c, c) for c, n in years_per.items() if n < 2]
 
     d = m["dataset"]
     t = m["test"]["model"]
-    th = m["threshold"]
     mk = m["masking"]
     probe = mk["company_probe"]
     cc = d["class_counts"]
@@ -60,8 +61,6 @@ def main() -> None:
         f"| {s['dimension'].split(' (')[0]} | {s['group']}{' *(n < ' + str(m['small_n']) + ', too small)*' if s['too_small'] else ''} "
         f"| {s['n']} | {f2(s['macro_f1'])} | {ci(s.get('macro_f1_ci'))} | {f2(s['macro_precision'])} | "
         f"{f2(s['macro_recall'])} |" for s in m["subgroups"])
-    terms = "; ".join(f"*{', '.join(x['term'].replace('__', '') for x in m['global_terms'][c][:4])}* ({c})"
-                      for c in THEMES if c != "OTHER")
     thin = d["thin_classes"]
 
     sup = [v_["support"] for v_ in m["test"]["per_class"].values()]
@@ -79,8 +78,9 @@ def main() -> None:
 Classifies passages from Indian FMCG annual reports (Chairman/CEO letter and MD&A) into six strategy themes plus Other, to compare disclosure emphasis across companies and years. Not a measure of spending, execution or performance.
 
 ### Data
-- **Reports:** {report_list}.{(' One year only: ' + ', '.join(one_year) + '.') if one_year else ''}
-- **Passages:** {len(corpus):,} kept after cleaning; {len(drops):,} blocks dropped.
+- **Training reports:** {train_list}.
+- **Reports analysed in the app:** {len(reports)} ({report_list}).{(' Never in training: ' + ', '.join(COMPANY_NAMES.get(c, c) for c in unseen) + ' (an unseen-company test, scored by `python -m stratlens.audit`).') if unseen else ''}
+- **Passages:** {len(corpus):,} across all reports after cleaning; {len(drops):,} blocks dropped.
 - **Labels:** {d['n_labelled']} passages ({' · '.join(f'{k} {v}' for k, v in cc.items())}).{(' Thin: ' + ', '.join(thin) + '.') if thin else ''}
 - **Provenance:** labels were AI-drafted following the labelling guidelines (`docs/labelling_guidelines.md`) and have not been human-verified.
 
@@ -105,9 +105,9 @@ Top coefficients per theme and per-passage term contributions (tf-idf × coeffic
 
 ### Limitations
 1. **Labels:** AI-drafted following the labelling guidelines and not human-verified. Every score here measures agreement with those drafts, not with an expert.
-2. **Size:** {len(reports)} reports; {min(sup)}–{max(sup)} test passages per theme, so intervals are wide.
+2. **Size:** {len(trained)} training reports; {min(sup)}–{max(sup)} test passages per theme, so intervals are wide.
 3. **Representation:** bag of words misses negation, tense and intent.
-4. **Specificity:** rule-based; {spot_txt}. Spot-checks were done by the AI assistant, not a person. Brand mentions count as named initiatives (favours brand-by-brand writing); "targeted", "commitment to…" and version numbers such as "2.0" can over-score.
+4. **Concreteness:** rule-based; {spot_txt}. Spot-checks were done by the AI assistant, not a person. Brand mentions count as named initiatives (favours brand-by-brand writing); "targeted", "commitment to…" and version numbers such as "2.0" can over-score.
 5. **Errors:** {ed['strategic_to_other']} of {ed['total']} test errors are strategic passages predicted as Other ({ed['other_to_strategic']} the reverse), so theme shares are likely conservative.
 6. **House style:** company identity is {probe['masked']:.0%} predictable from masked text, so cross-company differences may partly reflect writing style.
 7. **Benchmark:** shares include training passages; YoY intervals ignore labelling error.
@@ -116,7 +116,7 @@ Top coefficients per theme and per-passage term contributions (tf-idf × coeffic
 An optional LLM (Gemini) writes brief prose from the classifier's computed figures and answers Ask questions from passages found by hybrid retrieval (BM25 + MiniLM embeddings, rank fusion). It does not classify passages or produce metrics; numbers it writes are checked against the data, and Ask refuses when nothing relevant is retrieved.
 
 ### App
-Analysis: Overview · Briefs · Ask. Data: Upload. Model: How it works (pipeline diagram and inspector) · Evaluation · Model card.
+Analyse: Home · Company · Compare · Ask. Data: Add a report. Model: How it works (pipeline inspector, accuracy, limits). Everything shown is precomputed by `python -m stratlens.build`.
 
 ### Not for
 Investment decisions, valuation, ranking companies, inferring actual spend, or other industries without re-validation.

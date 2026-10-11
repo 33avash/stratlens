@@ -23,8 +23,10 @@ if len(keys) < 2:
 qp = st.query_params
 presets = [p for p in COMPARE_PRESETS if p["a"] in an["reports"] and p["b"] in an["reports"]]
 default_a, default_b = (presets[0]["a"], presets[0]["b"]) if presets else (keys[0], keys[1])
-st.session_state.setdefault("cmp_a", qp.get("a") if qp.get("a") in keys else default_a)
-st.session_state.setdefault("cmp_b", qp.get("b") if qp.get("b") in keys else default_b)
+st.session_state.setdefault("cmp_a", default_a)
+st.session_state.setdefault("cmp_b", default_b)
+if qp.get("a") in keys and qp.get("b") in keys:
+    ui.sync_from_query({"a": "cmp_a", "b": "cmp_b"})
 
 
 def _preset(a, b):
@@ -35,7 +37,7 @@ if presets:
     cols = st.columns(len(presets) + 1)
     for col, p in zip(cols, presets):
         with col:
-            st.button(p["label"], on_click=_preset, args=(p["a"], p["b"]), use_container_width=True,
+            st.button(p["label"], on_click=_preset, args=(p["a"], p["b"]), width="stretch",
                       type="primary" if (st.session_state["cmp_a"], st.session_state["cmp_b"]) == (p["a"], p["b"])
                       else "secondary")
 c1, c2 = st.columns(2)
@@ -45,6 +47,7 @@ with c2:
     b = st.selectbox("Report B", keys, format_func=ui.report_label, key="cmp_b")
 if (qp.get("a"), qp.get("b")) != (a, b):
     st.query_params.update({"a": a, "b": b})
+    ui.mark_query_seen({"a": "cmp_a", "b": "cmp_b"})
 if a == b:
     ui.empty_state("Pick two different reports.")
     st.stop()
@@ -74,7 +77,7 @@ with left:
     with ui.card("cmp_div", (f"{n_sig} of 6 themes differ by more than chance" if n_sig
                              else "Every theme is within noise"),
                  meta=f"{lb} minus {la}, share of strategy passages · click a bar for passages"):
-        ev = st.plotly_chart(charts.diverging(diffs, la, lb), use_container_width=True, config=PLOTLY_CONFIG,
+        ev = st.plotly_chart(charts.diverging(diffs, la, lb), width="stretch", config=PLOTLY_CONFIG,
                              on_select="rerun", selection_mode="points", key=f"div_{a}_{b}")
         ui.meta(f"Bars in {ui.tip('percentage points', ui.TIPS['pp'])}. Coloured = "
                 f"{ui.tip('bigger than chance', ui.TIPS['chance'])}; grey = within noise. The whisker is the "
@@ -87,7 +90,7 @@ with right:
     lead, k = (la, more_a) if more_a >= len(both) - more_a else (lb, len(both) - more_a)
     with ui.card("cmp_conc", f"{lead} is more concrete on {k} of {len(both)} themes",
                  meta="average concreteness, 0–5"):
-        st.plotly_chart(charts.paired(va, vb, la, lb, rng=(0, 5)), use_container_width=True, config=PLOTLY_CONFIG)
+        st.plotly_chart(charts.paired(va, vb, la, lb, rng=(0, 5)), width="stretch", config=PLOTLY_CONFIG)
         ui.meta(ui.tip("Concreteness", ui.TIPS["concreteness"]) + " counts figures, dates, named initiatives "
                 "and commitments in a passage (0–5). A blank bar means the report has no passages on that theme.")
 
@@ -127,7 +130,6 @@ if pick:
                 df = ui.evidence_rows(passages, co, yr, pick).head(3)
                 if df.empty:
                     ui.empty_state("No passages on this theme with enough model confidence.")
-                for _, row in df.iterrows():
-                    ui.passage(row)
+                ui.passages_block(df)
                 st.markdown(ui.link("company?" + ui.qs(company=co, year=yr, theme=pick), "All passages →"),
                             unsafe_allow_html=True)

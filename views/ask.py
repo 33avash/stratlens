@@ -16,6 +16,8 @@ if passages is None:
     st.stop()
 
 examples = ui.load_ask_examples()
+if st.query_params.get("q"):
+    ui.sync_from_query({"q": "ask_q"})
 
 
 def _set(q):
@@ -26,14 +28,14 @@ st.markdown('<p class="sl-meta">Try one:</p>', unsafe_allow_html=True)
 cols = st.columns(len(ASK_EXAMPLES))
 for col, q in zip(cols, ASK_EXAMPLES):
     with col:
-        st.button(q, on_click=_set, args=(q,), use_container_width=True, key=f"ex_{q}")
+        st.button(q, on_click=_set, args=(q,), width="stretch", key=f"ex_{q}")
 
 with st.form("ask_form", border=False):
     c0, c1 = st.columns([6, 1], vertical_alignment="bottom")
     with c0:
         st.text_input("Question", placeholder="e.g. What is HUL doing about rural distribution?", key="ask_q")
     with c1:
-        st.form_submit_button("Ask", type="primary", use_container_width=True)
+        st.form_submit_button("Ask", type="primary", width="stretch")
 q = st.session_state.get("ask_q", "").strip()
 if not q:
     ui.empty_state("Pick an example above or type a question.")
@@ -60,9 +62,11 @@ if cached and cached["passage_ids"] and set(cached["passage_ids"]) <= set(passag
     srcs, method = ask.sources(hits), cached["method"]
     if cached.get("status") in ("ok", "not_in_passages"):
         ans = cached
-    else:
+    elif st.session_state.get("ask_retry") == q:  # the user asked for a fresh AI answer
         with st.spinner("Writing the answer…"):
             ans = _answer(q, tuple(s["passage_id"] for s in srcs))
+    else:  # no stored answer: show the stored passages at once; never wait on the network unasked
+        ans = {"status": "not_cached", "text": "", "unsupported": []}
 else:
     with st.spinner("Searching the reports…"):
         srcs, method, ans = _live(q)
@@ -83,9 +87,14 @@ with ui.card("ask_ans", "Answer", meta="AI-written from the passages below" if a
     elif ans["status"] == "not_in_passages":
         ui.note("The passages found don't answer this directly. Read them below.", warn=True)
     else:
-        reason = ("AI answers are switched off (no API key)." if ans["status"] == "no_ai"
-                  else "The AI service is unavailable right now.")
+        reason = {"no_ai": "AI answers are switched off (no API key).",
+                  "not_cached": "No stored AI answer for this example yet."}.get(
+            ans["status"], "The AI service is unavailable right now.")
         ui.note(f"{reason} Here are the most relevant passages instead.")
+        if ans["status"] == "not_cached" and get_client() is not None:
+            if st.button("Write an AI answer", icon=":material/auto_awesome:"):
+                st.session_state["ask_retry"] = q
+                st.rerun()
 
 named = retrieval.companies_in_query(q)
 scope = f"only {' and '.join(ui.short(c) for c in named)}, named in the question" if named else ""

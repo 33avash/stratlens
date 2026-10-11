@@ -21,3 +21,12 @@ ask_examples:
   - What sustainability targets did HUL set?
   - What did Nestlé say about pricing and inflation?
   - How do Marico and Dabur differ on digital?
+
+# Demo mode (⋮ → Demo mode, or ?demo=1): the path the "Next →" button walks through.
+demo:
+  - {page: home, label: "Home: three findings and the fingerprint"}
+  - {page: company, params: {company: DABUR, year: FY2026}, label: "Company: Dabur FY2026"}
+  - {page: compare, params: {a: "DABUR|FY2025", b: "DABUR|FY2026"}, label: "Compare: Dabur FY25 → FY26"}
+  - {page: ask, params: {q: "How is Dabur talking about quick commerce?"}, label: "Ask: an example question"}
+  - {page: how-it-works, params: {tab: Pipeline}, label: "How it works: the pipeline inspector"}
+  - {page: how-it-works, params: {tab: Accuracy}, label: "How it works: accuracy"}

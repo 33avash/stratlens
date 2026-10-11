@@ -208,3 +208,10 @@ table.sl-prom td b { color: var(--accent); font-weight: 600; }
 .sl-sigs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 28px; }
 .sl-sig .h { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
 @media (max-width: 1100px) { .sl-sigs { grid-template-columns: 1fr; } }
+
+/* demo mode bar */
+div.st-key-demo_bar { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 1000; width: min(640px, 92vw); background: var(--card); border: 1px solid var(--accent); border-radius: 999px; padding: 6px 8px 6px 18px; box-shadow: 0 6px 24px rgba(0,0,0,.14); }
+div.st-key-demo_bar [data-testid="stHorizontalBlock"] { gap: 8px; }
+.sl-demo-l { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sl-demo-l b { color: var(--text); font-weight: 600; }
+div.st-key-demo_bar button { border-radius: 999px; min-height: 34px; }

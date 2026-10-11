@@ -13,10 +13,8 @@ if an is None or passages is None:
 qp = st.query_params
 companies = [c for c in COMPANIES if c in an["companies"]] + [c for c in an["companies"] if c not in COMPANIES]
 years = an["years"]
-if qp.get("company") in companies:
-    st.session_state.setdefault("co_company", qp["company"])
-if qp.get("year") in years:
-    st.session_state.setdefault("co_year", qp["year"])
+if qp.get("company") in companies and qp.get("year") in years:
+    ui.sync_from_query({"company": "co_company", "year": "co_year"})
 st.session_state.setdefault("co_company", companies[0])
 st.session_state.setdefault("co_year", years[-1])
 focus = qp.get("theme") if qp.get("theme") in STRATEGIC_THEMES else None
@@ -29,9 +27,11 @@ with c1:
 with c2:
     year = st.selectbox("Year", years, key="co_year")
 if (qp.get("company"), qp.get("year")) != (company, year):
-    st.query_params.update({"company": company, "year": year})
     if qp.get("company") not in (None, company):
         focus = None
+        st.query_params.pop("theme", None)
+    st.query_params.update({"company": company, "year": year})
+    ui.mark_query_seen({"company": "co_company", "year": "co_year"})
 
 key = f"{company}|{year}"
 r = an["reports"].get(key)

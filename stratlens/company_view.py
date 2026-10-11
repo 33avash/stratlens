@@ -52,7 +52,7 @@ def render(an: dict, passages: pd.DataFrame, company: str, year: str, focus: str
             try:
                 st.download_button("PDF brief", _cached_pdf(key, nar["text"], _pdf), icon=":material/download:",
                                    file_name=f"stratlens_{company}_{year}.pdf", mime="application/pdf",
-                                   use_container_width=True, key=f"{uid}_pdf")
+                                   width="stretch", key=f"{uid}_pdf")
             except Exception:
                 pass
 
@@ -61,12 +61,10 @@ def render(an: dict, passages: pd.DataFrame, company: str, year: str, focus: str
         if df.empty:
             ui.empty_state("No passages on this theme with enough model confidence.")
             return
-        for _, row in df.head(n).iterrows():
-            ui.passage(row)
+        ui.passages_block(df.head(n))
         if len(df) > n:
             with st.expander(f"{min(len(df) - n, more)} more of {len(df)}"):
-                for _, row in df.iloc[n:n + more].iterrows():
-                    ui.passage(row)
+                ui.passages_block(df.iloc[n:n + more])
 
     if focus:
         t = r["themes"][focus]
@@ -86,7 +84,7 @@ def render(an: dict, passages: pd.DataFrame, company: str, year: str, focus: str
         title = f"Stands out from the average on {lean['theme'].lower()}"
     with ui.card(f"{uid}_bench", title, meta="share of strategy passages · click a bar for its passages"):
         fig = charts.benchmark(rows_sorted, ui.short(company), peer_label)
-        ev = st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG, on_select="rerun",
+        ev = st.plotly_chart(fig, width="stretch", config=PLOTLY_CONFIG, on_select="rerun",
                              selection_mode="points", key=f"{uid}_bench_{key}")
         pts = (ev.selection.points if ev and ev.selection else []) or []
         if pts and pts[0].get("customdata") and on_theme_click:

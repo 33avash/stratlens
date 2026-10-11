@@ -39,8 +39,7 @@ def novelty_columns(passages: pd.DataFrame, nov: dict, left: tuple[str, str], ri
                     rows = _rows(passages, [x["passage_id"] for x in g["items"]])
                     if rows.empty:
                         ui.empty_state("Only very short fragments; nothing worth showing.")
-                    for _, row in rows.iterrows():
-                        ui.passage(row)
+                    ui.passages_block(rows)
                     if g["n"] > len(rows):
                         ui.meta(f"Showing the {len(rows)} clearest of {g['n']}.")
 
