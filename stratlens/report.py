@@ -514,3 +514,63 @@ def render_pdf(b: dict) -> bytes:
             evidence(pf)
     h2("Method and caveats"); para(b["method_note"], 9, muted)
     return bytes(pdf.output())
+
+
+# ---------------------------------------------------------------- v2 company brief PDF
+def company_pdf(title: str, brief: str, rows: list[dict], peer_label: str | None,
+                evidence: dict[str, list[dict]], note: str = CAVEAT) -> bytes:
+    """One-page brief for the Company page. rows: theme name, share, peer, all (0-1 or None).
+    evidence: theme name -> [{text, page}]. Every number comes from the caller's precomputed data."""
+    from fpdf import FPDF
+
+    pdf = FPDF(format="A4", unit="mm")
+    pdf.set_margins(18, 16, 18)
+    pdf.set_auto_page_break(True, 16)
+    pdf.add_font("Serif", "", str(FONT_DIR / "SourceSerif4-Regular.ttf"))
+    pdf.add_font("Serif", "B", str(FONT_DIR / "SourceSerif4-Semibold.ttf"))
+    pdf.add_page()
+    ink, muted, green = (20, 26, 23), (107, 117, 111), (30, 142, 78)
+    w = pdf.w - 36
+
+    def text(t, size=10.5, color=ink, bold=False, h=5.4):
+        pdf.set_font("Serif", "B" if bold else "", size)
+        pdf.set_text_color(*color)
+        pdf.multi_cell(w, h, t, new_x="LMARGIN", new_y="NEXT")
+
+    text(title, 20, bold=True, h=9)
+    text(f"StratLens brief · {date.today().isoformat()}", 8.5, muted)
+    pdf.ln(3)
+    text(brief, 12.5, h=6.2)
+    pdf.ln(4)
+    text("Share of strategy passages by theme", 11.5, bold=True)
+    pdf.set_font("Serif", "", 9.5)
+    cols = [("Theme", 78), ("This report", 28)] + ([(peer_label, 34)] if peer_label else []) + [("All companies", 30)]
+    pdf.set_text_color(*muted)
+    for name, cw in cols:
+        pdf.cell(cw, 6, name, align="L" if name == "Theme" else "R")
+    pdf.ln(6)
+    pdf.set_text_color(*ink)
+    for r in rows:
+        vals = [r["theme"], pct_str(r["share"])] + ([pct_str(r["peer"])] if peer_label else []) + [pct_str(r["all"])]
+        for (name, cw), v in zip(cols, vals):
+            pdf.cell(cw, 5.6, v, align="L" if name == "Theme" else "R")
+        pdf.ln(5.6)
+    pdf.ln(3)
+    text("Evidence", 11.5, bold=True)
+    for theme_name, items in evidence.items():
+        if not items:
+            continue
+        text(theme_name, 10, green, bold=True)
+        for e in items:
+            pdf.set_x(22)
+            pdf.set_font("Serif", "", 9.8)
+            pdf.set_text_color(*ink)
+            pdf.multi_cell(w - 4, 4.9, f"{e['text']}  (p. {e['page']})", new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(1.5)
+    pdf.ln(2)
+    text(note, 8.5, muted, h=4.4)
+    return bytes(pdf.output())
+
+
+def pct_str(x) -> str:
+    return "–" if x is None else f"{round(x * 100)}%"

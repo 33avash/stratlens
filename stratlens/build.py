@@ -3,7 +3,8 @@
 For every report in data/raw (named like britannia_FY2026.pdf):
   1. segment   extract text -> find the Chairman/CEO letter and MD&A -> clean -> passages
   2. predict   theme + confidence (saved classifier) -> concreteness (regex + spaCy NER) -> MiniLM embeddings
-Then, for all reports together: passages.csv, embeddings.npz, analytics.json, sections.csv, drop_log.csv.
+Then, for all reports together: passages.csv, embeddings.npz, analytics.json, sections.csv, drop_log.csv,
+and the text the app shows (narratives.json: briefs and comparison summaries; ask_examples.json).
 
 Idempotent. Each step has a key (hash of its inputs, recorded in data/processed/manifest.json):
   segment key  PDF bytes + section overrides for that report + preprocessing/section code
@@ -26,7 +27,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import analytics, embeddings, specificity
+from . import analytics, embeddings, explain, precompute, specificity
 from . import model as mdl
 from .config import (ANALYTICS_JSON, COMPANIES, CORPUS_CSV, DROPS_CSV, EMBEDDINGS_NPZ, GAZETTEER_YAML, LABELS_CSV,
                      MANIFEST_JSON, MODEL_PATH, OVERRIDES_CSV, PASSAGES_CSV, PROCESSED, RAW, REPORTS_DIR, ROOT,
@@ -37,7 +38,7 @@ from .sections import heading, resolve_sections, validate
 
 PKG = ROOT / "stratlens"
 SEGMENT_CODE = ["extract.py", "sections.py", "preprocess.py"]
-PREDICT_CODE = ["masking.py", "model.py", "specificity.py"]
+PREDICT_CODE = ["masking.py", "model.py", "specificity.py", "explain.py"]
 
 
 # ---------------------------------------------------------------- hashing
@@ -120,6 +121,7 @@ def run_predict(passages: pd.DataFrame, model, meta: dict) -> pd.DataFrame:
     base = passages[["passage_id", "company", "year", "section", "page", "text", "word_count"]].reset_index(drop=True)
     pf = mdl.predict_frame(model, base["text"], threshold=meta["threshold"])
     out = pd.concat([base, pf], axis=1)
+    out["why_terms"] = [json.dumps(t, ensure_ascii=False) for t in explain.why_terms(model, base["text"])]
     spec = specificity.score_texts(out["text"].tolist())
     out["specificity"] = [s["specificity"] for s in spec]
     out["spec_tier"] = [s["spec_tier"] for s in spec]
@@ -172,8 +174,17 @@ def aggregate(keys: list[str]) -> pd.DataFrame:
                             vecs=vecs.astype(np.float32))
     else:
         print("  WARNING: MiniLM model unavailable; embeddings.npz not updated.")
-    ANALYTICS_JSON.write_text(json.dumps(analytics.compute(passages), ensure_ascii=False), encoding="utf-8")
+    an = analytics.compute(passages)
+    ANALYTICS_JSON.write_text(json.dumps(an, ensure_ascii=False), encoding="utf-8")
     return passages
+
+
+def write_narratives(passages: pd.DataFrame) -> None:
+    an = json.loads(ANALYTICS_JSON.read_text(encoding="utf-8"))
+    print("Writing briefs, comparison summaries and example answers (cached LLM outputs are reused) ...",
+          flush=True)
+    stats = precompute.write_all(an, passages)
+    print("  " + " · ".join(f"{k}: {v}" for k, v in stats.items()))
 
 
 # ---------------------------------------------------------------- main
@@ -181,6 +192,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m stratlens.build", description=__doc__.split("\n")[0])
     ap.add_argument("--force", action="store_true", help="redo every report even if nothing changed")
     ap.add_argument("--only", action="append", default=[], help="limit to a report, e.g. MARICO_FY2026")
+    ap.add_argument("--narratives", action="store_true", help="rewrite briefs, summaries and example answers")
     args = ap.parse_args(argv)
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # PDF text includes ₹, ’ and – on Windows consoles
@@ -263,6 +275,8 @@ def main(argv: list[str] | None = None) -> int:
         passages = aggregate(all_keys)
     else:
         passages = pd.read_csv(PASSAGES_CSV)
+    if changed or args.force or args.narratives or not precompute.complete():
+        write_narratives(passages)
     MANIFEST_JSON.write_text(json.dumps(manifest, indent=1), encoding="utf-8")
 
     table = pd.DataFrame(rows)

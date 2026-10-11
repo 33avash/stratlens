@@ -81,8 +81,15 @@ class GeminiClient(LLMClient):
             kw["thinking_config"] = t.ThinkingConfig(thinking_level="low")
         return t.GenerateContentConfig(**kw)
 
+    def _key(self, system: str, prompt: str, json_mode: bool) -> str:
+        return hashlib.md5(f"{self.model}\n{system}\n{prompt}\n{json_mode}".encode("utf-8")).hexdigest()
+
+    def cached(self, system: str, prompt: str, json_mode: bool = False) -> str | None:
+        """The stored output for this exact request, without any network call (None if never generated)."""
+        return _cache_get(self._key(system, prompt, json_mode))
+
     def generate(self, system: str, prompt: str, max_tokens: int = 1200, json_mode: bool = False) -> str:
-        key = hashlib.md5(f"{self.model}\n{system}\n{prompt}\n{json_mode}".encode("utf-8")).hexdigest()
+        key = self._key(system, prompt, json_mode)
         cached = _cache_get(key)
         if cached is not None:
             return cached
@@ -101,6 +108,9 @@ class GeminiClient(LLMClient):
             except Exception as exc:  # google.genai.errors.APIError and network errors
                 last = exc
                 code = getattr(exc, "code", None)
+                msg = str(exc)
+                if code == 429 and ("free_tier" in msg or "PerDay" in msg or "per day" in msg.lower()):
+                    break  # daily/free-tier quota exhausted: retrying within seconds cannot help
                 if code in (429, 500, 503) and attempt < RETRIES:
                     time.sleep(2 + 3 * attempt)
                     continue

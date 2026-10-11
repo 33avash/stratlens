@@ -1,0 +1,23 @@
+# App copy and presets. Company codes and years must exist in companies.yaml.
+hero: "See what India's FMCG leaders emphasise in their strategy and what changed this year."
+
+# Plain-English pipeline strip shown on Home, Add a report and How it works.
+pipeline:
+  - {step: Read, what: "Pull the Chairman's letter and MD&A out of the annual report PDF"}
+  - {step: Clean, what: "Remove headers, tables, page numbers and legal boilerplate"}
+  - {step: Split, what: "Cut the text into passages of one to a few sentences"}
+  - {step: Classify theme, what: "A trained model sorts each passage into one of six strategy themes, or Other"}
+  - {step: Score concreteness, what: "Count figures, dates, named initiatives and commitments (0 to 5)"}
+  - {step: Compare, what: "Compare theme shares across companies and years, with a check for chance"}
+
+compare_presets:
+  - {label: "Dabur FY25 → FY26", a: DABUR|FY2025, b: DABUR|FY2026}
+  - {label: "HUL vs Godrej", a: HUL|FY2026, b: GODREJ|FY2026}
+  - {label: "Nestlé vs Britannia", a: NESTLE|FY2026, b: BRITANNIA|FY2026}
+
+ask_examples:
+  - How is Dabur talking about quick commerce?
+  - Which company talks most about rural expansion?
+  - What sustainability targets did HUL set?
+  - What did Nestlé say about pricing and inflation?
+  - How do Marico and Dabur differ on digital?

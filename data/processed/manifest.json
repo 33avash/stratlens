@@ -1,62 +1,62 @@
 {
  "DABUR_FY2025": {
   "segment_key": "b3ba069bf429644d149f7cd6e4ad034d",
-  "predict_key": "807e0c829e1f622edd0102458bd18350",
+  "predict_key": "d204b87302d2c86b46dac21795e1353e",
   "built": "2026-10-11"
  },
  "DABUR_FY2026": {
   "segment_key": "8ab9cefd5a30b1d76e51ebd0f77f0d97",
-  "predict_key": "a551a797930ff207dfc4c4255a94f652",
+  "predict_key": "4b133467ef672c1ebae136c015596a29",
   "built": "2026-10-11"
  },
  "HUL_FY2025": {
   "segment_key": "3dd34c8f242b8d8c89f8dc225894dd79",
-  "predict_key": "746f4cee28b1ee2393db1eb0a8bc1cb2",
+  "predict_key": "0cad2775cdb7a62de8c70b0048d2a2a1",
   "built": "2026-10-11"
  },
  "HUL_FY2026": {
   "segment_key": "166dc89eab2586711c834fd7cbb66f0c",
-  "predict_key": "3b6bdfc38ce53e6bfba52f61f6bd9b78",
+  "predict_key": "a715c3581a4f71e57769a89c5c64ef79",
   "built": "2026-10-11"
  },
  "NESTLE_FY2026": {
   "segment_key": "431d40ee06b2cb3ec2d641a0afd649bf",
-  "predict_key": "b22d25d4ec69643dcac6f505f3e71e3d",
+  "predict_key": "b04a442eeeee5a429daafb94b8c6856a",
   "built": "2026-10-11"
  },
  "BRITANNIA_FY2025": {
   "segment_key": "2d357e38e364cdfa9b44a13f549dc005",
-  "predict_key": "93f56486c3d39e4e52b40aafab59e839",
+  "predict_key": "060b3ca997ad4e9213ebc869483f09e4",
   "built": "2026-10-11"
  },
  "BRITANNIA_FY2026": {
   "segment_key": "a359840253414f49de35439656ce1b75",
-  "predict_key": "7c53cb8282a7f00e00f83fe1818a7b64",
+  "predict_key": "9f897bf2a1ac7f407440718e7bb30c37",
   "built": "2026-10-11"
  },
  "MARICO_FY2025": {
   "segment_key": "1fe4ce0e0abaf3c547777affaa7b0a2b",
-  "predict_key": "f8f6091fc01b32e8faada0dba67bfb25",
+  "predict_key": "d057c5c67c94640ff9842734e969a8f0",
   "built": "2026-10-11"
  },
  "GODREJ_FY2025": {
   "segment_key": "e5f168e80d299b2b56799754b5baffe7",
-  "predict_key": "82641460b8ceae221e9bc25681d5f63e",
+  "predict_key": "4fd900246c1c804ed5863a32e46edb40",
   "built": "2026-10-11"
  },
  "GODREJ_FY2026": {
   "segment_key": "1b3c5c70da65413f2bae6356d6339855",
-  "predict_key": "d44dbeb85d6062418ff7bb65302e8488",
+  "predict_key": "64da221071ccc0c3e299f411450c7759",
   "built": "2026-10-11"
  },
  "MARICO_FY2026": {
   "segment_key": "e1644828e49ce7ea0671dc148c8ee8e1",
-  "predict_key": "b84a0f27cbe47efcda4eee080c712ec9",
+  "predict_key": "de07b504007a64f23868e9cf98a8b032",
   "built": "2026-10-11"
  },
  "NESTLE_FY2025": {
   "segment_key": "d4dc228b1dfaa1232134fbe94f5480ac",
-  "predict_key": "7d7b710786a9abd42b4f522e26976dd3",
+  "predict_key": "c2ece2c3b1a19c0d448a5ed9733d9839",
   "built": "2026-10-11"
  }
 }

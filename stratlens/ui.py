@@ -1,26 +1,28 @@
-"""Shared Streamlit components and cached artefact loaders. Styling lives in assets/style.css."""
+"""Shared Streamlit components and cached artefact loaders. Styling lives in assets/style.css.
+
+The app only reads files written offline by `python -m stratlens.build`, `train.py` and `python -m stratlens.audit`.
+"""
 from __future__ import annotations
 
 import html
 import json
 from contextlib import contextmanager
+from urllib.parse import quote as urlquote
 
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
 
-from . import explain
-from . import model as mdl
 from . import specificity, theme, trace
-from .config import (BENCHMARK_CSV, COMPANY_NAMES, MAX_WORDS, METRICS_JSON, MODEL_PATH, REVIEW_THRESHOLD, ROOT,
-                     SECTION_NAMES, SECTIONS_CSV, SYSTEM_NAMES, THEME_NAMES)
+from . import model as mdl
+from .config import (ANALYTICS_JSON, ASK_EXAMPLES_JSON, AUDIT_JSON, COMPANIES, COMPANY_NAMES, COMPANY_SHORT,
+                     EVIDENCE_MIN_CONFIDENCE, MAX_WORDS, METRICS_JSON, MODEL_PATH, NARRATIVES_JSON, PASSAGES_CSV,
+                     PIPELINE_STEPS, RELIABILITY_F1, REVIEW_THRESHOLD, ROOT, SECTION_NAMES, SECTIONS_CSV,
+                     STRATEGIC_THEMES, SYSTEM_NAMES, THEME_COLORS, THEME_NAMES)
 from .report import clean
-from .theme import THEME_COLORS, tint
+from .theme import tint
 
 CSS_PATH = ROOT / "assets" / "style.css"
-
-def system_name(s: str) -> str:
-    return SYSTEM_NAMES.get(s, s)
 
 LIGHT = {"--card": "#FFFFFF", "--border": "#E6E9E5", "--text": "#141A17", "--muted": "#6B756F",
          "--subtle": "#F3F5F2", "--bar": "#D3D9D4", "--accent": "#1E8E4E", "--accent-soft": "#E4F3EA",
@@ -30,7 +32,15 @@ DARK = {"--card": "#141A17", "--border": "#232B27", "--text": "#E4E9E5", "--mute
         "--warn": "#E3AE52", "--warn-soft": "#2A2314", "--neg-soft": "#2C1A16"}
 
 
-# ---------- loaders (artefacts come from train.py; the app never retrains) ----------
+def system_name(s: str) -> str:
+    return SYSTEM_NAMES.get(s, s)
+
+
+# ---------- loaders (artefacts are built offline; the app never retrains or recomputes) ----------
+def _json(path):
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
 @st.cache_resource(show_spinner=False)
 def load_model():
     if not MODEL_PATH.exists():
@@ -40,16 +50,39 @@ def load_model():
 
 @st.cache_data(show_spinner=False)
 def load_metrics() -> dict | None:
-    return json.loads(METRICS_JSON.read_text(encoding="utf-8")) if METRICS_JSON.exists() else None
+    return _json(METRICS_JSON)
 
 
 @st.cache_data(show_spinner=False)
-def load_benchmark() -> pd.DataFrame | None:
-    if not BENCHMARK_CSV.exists():
+def load_passages() -> pd.DataFrame | None:
+    if not PASSAGES_CSV.exists():
         return None
-    df = pd.read_csv(BENCHMARK_CSV)
-    df["source"] = "Sample analysis"
+    df = pd.read_csv(PASSAGES_CSV)
+    df["why"] = [json.loads(x) if isinstance(x, str) else [] for x in df.get("why_terms", pd.Series([None] * len(df)))]
     return df
+
+
+load_benchmark = load_passages  # older name, used by the upload flow
+
+
+@st.cache_data(show_spinner=False)
+def load_analytics() -> dict | None:
+    return _json(ANALYTICS_JSON)
+
+
+@st.cache_data(show_spinner=False)
+def load_narratives() -> dict:
+    return _json(NARRATIVES_JSON) or {"brief": {}, "compare": {}}
+
+
+@st.cache_data(show_spinner=False)
+def load_ask_examples() -> dict:
+    return _json(ASK_EXAMPLES_JSON) or {}
+
+
+@st.cache_data(show_spinner=False)
+def load_audit() -> dict | None:
+    return _json(AUDIT_JSON)
 
 
 @st.cache_data(show_spinner=False)
@@ -57,10 +90,22 @@ def load_sections() -> pd.DataFrame | None:
     return pd.read_csv(SECTIONS_CSV) if SECTIONS_CSV.exists() else None
 
 
-@st.cache_data(show_spinner=False, max_entries=2000)
-def explain_text(text: str) -> dict | None:
-    model, _ = load_model()
-    return None if model is None else explain.explain(model, text, k=8)
+# ---------- names ----------
+def company_name(code: str) -> str:
+    return COMPANY_NAMES.get(code, code.title())
+
+
+def short(code: str) -> str:
+    return COMPANY_SHORT.get(code, code.title())
+
+
+def report_label(key: str) -> str:
+    c, y = key.split("|")
+    return f"{short(c)} {y}"
+
+
+def section_name(code: str) -> str:
+    return SECTION_NAMES.get(code, code)
 
 
 # ---------- scaffolding ----------
@@ -83,28 +128,64 @@ def inject_css() -> None:
     st.markdown(f"<style>{vars_css}\n{CSS_PATH.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
 
-def _queue_theme_switch() -> None:
-    st.session_state["_theme_switch"] = "Light" if st.session_state["light_mode"] else "Dark"
-
-
-def theme_toggle() -> None:
-    """Light/dark switch. Streamlit keeps the chosen theme in the browser, so it is stored there and the page reloads."""
+def apply_theme_switch() -> None:
+    """Streamlit keeps the chosen theme in the browser, so a switch is stored there and the page reloads."""
     pending = st.session_state.pop("_theme_switch", None)
     if pending:
         components.html(f"<script>window.parent.localStorage.setItem('stActiveTheme-/-v2', '\"{pending}\"');"
                         "window.parent.location.reload();</script>", height=0)
-    st.session_state["light_mode"] = (pending == "Light") if pending else not theme.is_dark()
-    st.toggle("Light mode", key="light_mode", on_change=_queue_theme_switch)
 
 
-def header(title: str, subtitle: str = "", stamp: str = "") -> None:
-    st.markdown(f'<div class="sl-head"><div><div class="sl-title">{title}</div>'
-                + (f'<p class="sl-sub">{subtitle}</p>' if subtitle else "") + "</div>"
-                + (f'<div class="sl-stamp">{stamp}</div>' if stamp else "") + "</div>", unsafe_allow_html=True)
+def _about() -> str:
+    an, m = load_analytics(), load_metrics()
+    if not an:
+        return "No data built yet."
+    reps = sorted(an["reports"])
+    missing = an.get("missing", [])
+    lines = [f"**{len(reps)} annual reports · {len(an['companies'])} companies** "
+             f"({', '.join(company_name(c) for c in an['companies'])}), {', '.join(an['years'])}."]
+    if missing:
+        lines.append("Missing: " + ", ".join(report_label(k) for k in missing) + ".")
+    lines.append("Only the Chairman/CEO letter and the MD&A are read. Sources: NSE annual-report filings "
+                 "(see docs/data_sources.md).")
+    lines.append(f"Themes come from a trained text classifier (7 classes). Data built {an['generated']}"
+                 + (f"; model trained {m['generated']}." if m else "."))
+    lines.append("Shares show how much a report talks about a theme, not what the company spends or achieves.")
+    return "\n\n".join(lines)
 
 
-def page_header(title: str, subtitle: str = "") -> None:
-    header(title, subtitle)
+def menu() -> None:
+    """The ⋮ menu: appearance and About this data."""
+    with st.popover("", icon=":material/more_vert:", help="Menu"):
+        dark = theme.is_dark()
+        pick = st.segmented_control("Appearance", ["Light", "Dark"], default="Dark" if dark else "Light",
+                                    key="appearance")
+        if pick and pick != ("Dark" if dark else "Light"):
+            st.session_state["_theme_switch"] = pick
+            st.rerun()
+        st.markdown("**About this data**")
+        st.markdown(f'<div class="sl-about">{_md(_about())}</div>', unsafe_allow_html=True)
+
+
+def _md(text: str) -> str:
+    """Tiny markdown for the About box: **bold** and paragraphs only."""
+    import re
+    esc = html.escape(text)
+    esc = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", esc)
+    return "".join(f"<p>{p}</p>" for p in esc.split("\n\n"))
+
+
+def header(title: str, subtitle: str = "") -> None:
+    c1, c2 = st.columns([20, 1], vertical_alignment="top")
+    with c1:
+        st.markdown(f'<div class="sl-head"><div><div class="sl-title">{html.escape(title)}</div>'
+                    + (f'<p class="sl-sub">{subtitle}</p>' if subtitle else "") + "</div></div>",
+                    unsafe_allow_html=True)
+    with c2:
+        menu()
+
+
+page_header = header
 
 
 @contextmanager
@@ -130,7 +211,19 @@ def note(text: str, warn: bool = False) -> None:
 
 
 def empty_state(sentence: str, action: str = "") -> None:
-    st.markdown(f'<div class="sl-note">{sentence} {action}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="sl-empty">{sentence} {action}</div>', unsafe_allow_html=True)
+
+
+def meta(text: str) -> None:
+    st.markdown(f'<p class="sl-meta">{text}</p>', unsafe_allow_html=True)
+
+
+def link(href: str, label: str, cls: str = "sl-link") -> str:
+    return f'<a class="{cls}" href="{html.escape(href, quote=True)}" target="_self">{label}</a>'
+
+
+def qs(**params) -> str:
+    return "&".join(f"{k}={urlquote(str(v), safe='|')}" for k, v in params.items() if v not in (None, ""))
 
 
 def kpi_cards(items: list[dict], inset: bool = False) -> None:
@@ -145,15 +238,22 @@ def kpi_cards(items: list[dict], inset: bool = False) -> None:
     st.markdown(f'<div class="sl-kpis" style="--n:{len(items)}">{"".join(cells)}</div>', unsafe_allow_html=True)
 
 
-def findings(items: list[tuple[str, str]]) -> None:
-    """Numbered short findings: a bold headline and one muted line each."""
-    st.markdown('<div class="sl-finds">' + "".join(
-        f'<div class="sl-find"><b>{i}</b><div><div class="h">{html.escape(h)}</div><div class="d">{html.escape(d)}'
-        f'</div></div></div>' for i, (h, d) in enumerate(items, 1)) + "</div>", unsafe_allow_html=True)
-
-
 def kpi_strip(items: list[tuple[str, str]]) -> None:
-    kpi_cards([{"label": l, "value": v} for v, l in items], inset=True)
+    kpi_cards([{"label": lab, "value": v} for v, lab in items], inset=True)
+
+
+def pipeline_strip(active: int | None = None, href: str | None = "how-it-works", done: int | None = None) -> None:
+    """The six plain-English steps. `active` highlights one (Add a report progress); `done` ticks earlier ones."""
+    parts = []
+    for i, s in enumerate(PIPELINE_STEPS):
+        cls = "active" if i == active else ("done" if done is not None and i < done else "")
+        mark = "✓" if cls == "done" else str(i + 1)
+        parts.append(f'<span class="sl-ps {cls}" title="{html.escape(s["what"])}"><b>{mark}</b>{html.escape(s["step"])}'
+                     "</span>")
+    arrow = '<span class="sl-ps-arrow">→</span>'
+    body = arrow.join(parts)
+    tail = f' {link(href, "How it works →", "sl-ps-more")}' if href else ""
+    st.markdown(f'<div class="sl-pstrip">{body}{tail}</div>', unsafe_allow_html=True)
 
 
 def steps(labels: list[str], active: int) -> None:
@@ -172,17 +272,9 @@ def tip(label: str, text: str) -> str:
     return f'<span class="sl-tip" title="{html.escape(text)}">{html.escape(label)}</span>'
 
 
-def company_badge(code: str) -> str:
-    """Company initials on a neutral chip: companies never borrow a theme colour."""
-    return (f'<span class="sl-co" style="border-color:{theme.company_color(code)}">'
-            f'{html.escape(theme.company_initials(code))}</span>')
-
-
-# ---------- formatters ----------
-def theme_label(code: str, full: bool = True) -> str:
-    name = THEME_NAMES.get(code, code) if full else code
+def theme_label(code: str, name: str | None = None) -> str:
     return (f'<span class="sl-theme"><span class="sl-dot" style="background:{THEME_COLORS.get(code, "#999")}"></span>'
-            f'{html.escape(name)}</span>')
+            f'{html.escape(name or THEME_NAMES.get(code, code))}</span>')
 
 
 def conf_bar(c: float, threshold: float = REVIEW_THRESHOLD) -> str:
@@ -191,15 +283,124 @@ def conf_bar(c: float, threshold: float = REVIEW_THRESHOLD) -> str:
             f'<span class="num">{c:.2f}</span>')
 
 
-def company_name(code: str) -> str:
-    return COMPANY_NAMES.get(code, code.title())
+def finding_cards(items: list[dict]) -> None:
+    """Insight cards: the title is the finding; the whole card links to its evidence."""
+    cells = []
+    for it in items:
+        dot = (f'<span class="sl-dot" style="background:{THEME_COLORS[it["theme"]]}"></span>'
+               if it.get("theme") else "")
+        cells.append(f'<a class="sl-fcard" href="{html.escape(it["link"], quote=True)}" target="_self">'
+                     f'<div class="h">{dot}{html.escape(it["title"])}</div>'
+                     f'<div class="d">{html.escape(it["detail"])}</div><div class="go">See evidence →</div></a>')
+    st.markdown(f'<div class="sl-fcards">{"".join(cells)}</div>', unsafe_allow_html=True)
 
 
-def section_name(code: str) -> str:
-    return SECTION_NAMES.get(code, code)
+# ---------- fingerprint ----------
+def fingerprint_grid(an: dict, mode: str) -> None:
+    """Companies × themes. mode: a year (share of strategy passages) or 'Change' (latest minus previous year).
+    Every cell links to the Company page filtered to that theme; missing reports say so."""
+    themes = STRATEGIC_THEMES
+    head = "".join(f'<th><span class="sl-dot" style="background:{THEME_COLORS[t]}"></span>'
+                   f'{html.escape(THEME_NAMES[t])}</th>' for t in themes)
+    rows = []
+    years = an["years"]
+    shares = [r["themes"][t]["share"] for r in an["reports"].values() for t in themes]
+    smax = max(shares) if shares else 1
+    for c in an["companies"]:
+        cells = []
+        if mode == "Change":
+            y = an["yoy"].get(c)
+            for t in themes:
+                if not y:
+                    missing = [k for k in an["missing"] if k.startswith(c + "|")]
+                    cells.append(f'<td class="miss">{"missing " + missing[0].split("|")[1] if missing else "–"}</td>')
+                    continue
+                d = y["themes"][t]
+                v = round(d["pp"])
+                txt = "0" if v == 0 else f"{v:+d}"
+                href = "compare?" + qs(a=f"{c}|{y['from']}", b=f"{c}|{y['to']}")
+                if d["significant"]:
+                    col = theme.POSITIVE if d["pp"] > 0 else theme.NEGATIVE
+                    bg = tint(col, min(0.15 + abs(d["pp"]) / 40, 0.55))
+                    cells.append(f'<td style="background:{bg}"><a href="{href}" target="_self" title="Bigger than '
+                                 f'chance">{txt}</a></td>')
+                else:
+                    cells.append(f'<td class="noise"><a href="{href}" target="_self" title="Within noise">'
+                                 f'{txt}</a></td>')
+        else:
+            r = an["reports"].get(f"{c}|{mode}")
+            for t in themes:
+                if r is None:
+                    cells.append('<td class="miss">missing</td>')
+                    continue
+                s = r["themes"][t]["share"]
+                a = 0.08 + 0.82 * (s / smax)
+                strong = a > 0.55
+                href = "company?" + qs(company=c, year=mode, theme=t)
+                cells.append(f'<td style="background:{tint(theme.ACCENT, a)}" class="{"strong" if strong else ""}">'
+                             f'<a href="{href}" target="_self" title="{r["themes"][t]["count"]} of '
+                             f'{r["n_strategic"]} strategy passages">{s * 100:.0f}%</a></td>')
+        name = link("company?" + qs(company=c, year=years[-1]), html.escape(short(c)))
+        rows.append(f'<tr><th class="co">{name}</th>{"".join(cells)}</tr>')
+    st.markdown(f'<div class="sl-fpwrap"><table class="sl-fp"><thead><tr><th></th>{head}</tr></thead>'
+                f'<tbody>{"".join(rows)}</tbody></table></div>', unsafe_allow_html=True)
 
 
+# ---------- passages ----------
+def passage(row, show_why: bool = True, anchor: str | None = None, label: str | None = None) -> None:
+    """One evidence passage: text, page, 'why this theme' chips and a details toggle with the raw metadata."""
+    color = THEME_COLORS.get(row["pred"], "#999")
+    text = html.escape(clean(row["text"]))
+    why = row.get("why") if isinstance(row.get("why"), list) else []
+    chips = ("".join(f"<span>{html.escape(w)}</span>" for w in why[:3]) if show_why and why else "")
+    signals = specificity.describe(row.get("spec_signals"))
+    details = (f'{html.escape(section_name(row["section"]))} · model confidence {row["confidence"]:.2f} · '
+               f'concreteness {int(row["specificity"])}/5' + (f' ({html.escape(signals)})' if signals else "")
+               + f' · {html.escape(row["passage_id"])}')
+    idattr = f' id="{anchor}"' if anchor else ""
+    lab = f'<b class="mono">{html.escape(label)}</b> ' if label else ""
+    st.markdown(
+        f'<div class="sl-quote"{idattr} style="border-left-color:{color}"><div class="q">{lab}{text}</div>'
+        f'<div class="m"><span>{html.escape(short(row["company"]))} {row["year"]} · p.{int(row["page"])}</span>'
+        + (f'<span class="sl-why" title="Words that pushed the model towards this theme">why this theme: '
+           f'{chips}</span>' if chips else "")
+        + f'<details><summary>details</summary>{details}</details></div></div>', unsafe_allow_html=True)
+
+
+def evidence_rows(passages: pd.DataFrame, company: str, year: str, theme_code: str) -> pd.DataFrame:
+    df = passages[(passages.company == company) & (passages.year == year) & (passages.pred == theme_code)
+                  & (passages.confidence >= EVIDENCE_MIN_CONFIDENCE)]
+    return df.sort_values(["confidence", "specificity"], ascending=False)
+
+
+def reliability(company: str) -> tuple[float | None, str]:
+    """Per-company theme accuracy (macro-F1) from the human audit if available, else the AI-drafted test set.
+    Returns (f1 or None, source)."""
+    au = load_audit()
+    if au:
+        for p in au.get("per_company", []):
+            if p["company"] == company:
+                return p["macro_f1"], "your labels"
+    m = load_metrics()
+    if m:
+        for s in m.get("subgroups", []):
+            if s["dimension"] == "Company" and s["group"] == company:
+                return s["macro_f1"], "AI-drafted test labels"
+    return None, "not in training"
+
+
+def reliability_note(company: str) -> None:
+    f1, src = reliability(company)
+    if f1 is not None and f1 < RELIABILITY_F1:
+        note("The model is less reliable on this company's writing; read the evidence.", warn=True)
+    elif f1 is None:
+        note(f"The model never saw {html.escape(short(company))}'s reports in training and its accuracy here "
+             "has not been checked yet; read the evidence.", warn=True)
+
+
+# ---------- pipeline inspector (How it works, Add a report) ----------
 def highlight(text: str, terms: list[str], color: str) -> str:
+    from . import explain
     spans = explain.highlight_spans(text, terms)
     out, last = [], 0
     for s, e in spans:
@@ -210,95 +411,68 @@ def highlight(text: str, terms: list[str], color: str) -> str:
     return "".join(out)
 
 
-def quote(row, show_terms: bool = True) -> None:
-    theme_code = row["pred"]
-    color = THEME_COLORS.get(theme_code, "#999")
-    text = clean(row["text"])
-    body = html.escape(text)
-    if show_terms:
-        ex = explain_text(row["text"])
-        if ex and ex["pred"] == theme_code:
-            body = highlight(text, [t["term"] for t in ex["positive"][:6]], color)
-    signals = specificity.describe(row.get("spec_signals"))
-    meta = (f'{company_name(row["company"])} · {row["year"]} · {section_name(row["section"])} · p.{int(row["page"])} · '
-            f'confidence {row["confidence"]:.2f}'
-            + (f' · {str(row["spec_tier"]).lower()}' if isinstance(row.get("spec_tier"), str) else "")
-            + (f' ({html.escape(signals)})' if signals else ""))
-    st.markdown(f'<div class="sl-quote" style="border-left-color:{color}"><div class="q">{body}</div>'
-                f'<div class="m">{meta}</div></div>', unsafe_allow_html=True)
-
-
-def predictions_table(df: pd.DataFrame, max_rows: int = 50) -> None:
-    rows = []
-    for r in df.head(max_rows).itertuples():
-        spec = pill(r.spec_tier, "good" if r.spec_tier == "Specific" else "") \
-            if isinstance(getattr(r, "spec_tier", None), str) else ""
-        rows.append(f"<tr><td class='t'>{html.escape(clean(r.text))}</td><td>{theme_label(r.pred)}</td>"
-                    f"<td>{conf_bar(r.confidence)}</td><td>{spec}</td><td class='r'>{int(r.page)}</td></tr>")
-    st.markdown("<table class='sl-table'><thead><tr><th>Passage</th><th>Theme</th><th>Confidence</th>"
-                "<th>Specificity</th><th class='r'>Page</th></tr></thead>"
-                f"<tbody>{''.join(rows)}</tbody></table>", unsafe_allow_html=True)
-    if len(df) > max_rows:
-        st.markdown(f'<p class="sl-meta">{max_rows} of {len(df)} shown</p>', unsafe_allow_html=True)
-
-
 def _step(n: int, title: str, how: str, body: str) -> None:
     st.markdown(f'<div class="sl-stp"><div class="sl-stp-n">{n}</div><div class="sl-stp-b"><div class="sl-stp-t">'
                 f'{title}<span>{how}</span></div>{body}</div></div>', unsafe_allow_html=True)
 
 
 def pipeline_inspector(text: str) -> None:
-    """Every step for one piece of text: cleaned, masked, TF-IDF features, probabilities, theme, flag, specificity."""
-    model, meta = load_model()
+    """Every step for one piece of text: cleaned, masked, TF-IDF features, probabilities, theme, concreteness."""
+    model, meta_ = load_model()
     if model is None:
         empty_state("No trained model.", "Run <code>python train.py</code>.")
         return
     cleaned, passages, dropped = trace.segment_text(text)
     if dropped:
-        note(f"The corpus build would drop this block as <b>{dropped}</b>. Inspecting it anyway.", warn=True)
-    passage = passages[0] if passages else cleaned
+        note(f"The build would drop this block as <b>{dropped}</b>. Inspecting it anyway.", warn=True)
+    passage_ = passages[0] if passages else cleaned
     if len(passages) > 1:
-        i = st.selectbox(f"Segmented into {len(passages)} passages of up to {MAX_WORDS} words. Inspect:",
+        i = st.selectbox(f"Split into {len(passages)} passages of up to {MAX_WORDS} words. Inspect:",
                          range(len(passages)), format_func=lambda k: f"{k + 1}. {passages[k][:90]}…")
-        passage = passages[i]
-    t = trace.trace(model, passage, meta["threshold"])
+        passage_ = passages[i]
+    t = trace.trace(model, passage_, meta_["threshold"])
     color = THEME_COLORS[t["pred"]]
     sp, sig = t["specificity"], t["specificity"]["signals"]
 
     left, right = st.columns([1, 1], gap="large")
     with left:
-        drop = (f'<p class="sl-meta">The corpus filters would drop this passage: {html.escape(t["filter"])}.</p>'
+        drop = (f'<p class="sl-meta">The build would drop this passage: {html.escape(t["filter"])}.</p>'
                 if t["filter"] else "")
-        _step(1, "Clean and segment", "header, bullet and hyphenation fixes · sentence split",
-              f'<div class="sl-code">{html.escape(clean(passage))}</div>{drop}')
-        _step(2, "Mask", "company, brand (curated lists), number, year → placeholders",
+        _step(1, "Clean and split", "header, bullet and hyphenation fixes · sentence split",
+              f'<div class="sl-code">{html.escape(clean(passage_))}</div>{drop}')
+        _step(2, "Hide names", "company, brand, number, year → placeholders",
               f'<div class="sl-code">{html.escape(t["masked"])}</div>')
         flag = (pill(f"low confidence · {t['confidence']:.2f} < {t['threshold']:.2f}", "warn") if t["low_confidence"]
-                else pill(f"confidence {t['confidence']:.2f} ≥ {t['threshold']:.2f}", "good"))
-        _step(5, "Predicted theme", "confidence = top-class probability",
+                else pill(f"confidence {t['confidence']:.2f}", "good"))
+        _step(5, "Theme", "the most probable of the 7 classes",
               f'<p style="margin:4px 0">{theme_label(t["pred"])} &nbsp; {flag}</p>')
-        rows = [("Quantities", str(sig["numbers"]), 2 if sig["numbers"] >= 3 else 1 if sig["numbers"] else 0),
+        rows = [("Figures", str(sig["numbers"]), 2 if sig["numbers"] >= 3 else 1 if sig["numbers"] else 0),
                 ("Date or deadline", "yes" if sig["time"] else "no", int(sig["time"])),
                 ("Named initiative or brand", ", ".join(sig["named"]) or "none", int(bool(sig["named"]))),
                 ("Commitment language", "yes" if sig["commitment"] else "no", int(sig["commitment"]))]
         body = "".join(f"<tr><td>{a}</td><td>{html.escape(b)}</td><td class='r'>+{c}</td></tr>" for a, b, c in rows)
-        _step(6, "Specificity", "regex + spaCy NER on unmasked text · 0–1 Vague · 2 Moderate · 3–5 Specific",
+        _step(6, "Concreteness", "regex + spaCy named entities on the original text",
               f'<table class="sl-table"><tbody>{body}<tr><td><b>Score</b></td><td>{sp["tier"]}</td>'
               f'<td class="r"><b>{sp["score"]}/5</b></td></tr></tbody></table>')
     with right:
         feats = "".join(f"<tr><td>{html.escape(f['term'])}</td><td class='r'>{f['tfidf']:.3f}</td>"
                         f"<td class='r'>{f['coef']:+.2f}</td><td class='r'>{f['contribution']:+.3f}</td></tr>"
                         for f in t["contributions"]) or "<tr><td class='sl-small' colspan='4'>no known terms</td></tr>"
-        _step(3, "TF-IDF features", "1–2 grams · sublinear tf · stop words removed",
-              f'<p class="sl-meta">{t["n_features"]} vocabulary terms present. Largest effects on '
-              f'{html.escape(THEME_NAMES[t["pred"]])}: tf-idf weight × class coefficient.</p>'
-              f'<table class="sl-table"><thead><tr><th>Term</th><th class="r">tf-idf</th><th class="r">coef</th>'
+        _step(3, "Words → numbers (TF-IDF)", "words and word pairs, weighted by how distinctive they are",
+              f'<p class="sl-meta">{t["n_features"]} known terms present. Largest pushes towards '
+              f'{html.escape(THEME_NAMES[t["pred"]])}: weight × learned coefficient.</p>'
+              f'<table class="sl-table"><thead><tr><th>Term</th><th class="r">weight</th><th class="r">coef</th>'
               f'<th class="r">effect</th></tr></thead><tbody>{feats}</tbody></table>')
         probs = "".join(f"<tr><td>{theme_label(p['label'])}</td><td class='r'>{conf_bar(p['prob'], 0)}</td></tr>"
                         for p in t["probs"])
-        _step(4, "Logistic regression", "balanced class weights · probabilities over 7 classes",
+        _step(4, "Classify (logistic regression)", "one probability per class",
               f'<table class="sl-table"><tbody>{probs}</tbody></table>')
     st.markdown(f'<div class="sl-quote" style="border-left-color:{color}"><div class="q">'
-                f'{highlight(clean(passage), [f["term"] for f in t["contributions"] if f["contribution"] > 0], color)}'
-                f'</div><div class="m">highlighted: terms pushing toward {t["pred"]} (association, not causation)'
+                f'{highlight(clean(passage_), [f["term"] for f in t["contributions"] if f["contribution"] > 0], color)}'
+                f'</div><div class="m">highlighted: words pushing towards this theme (association, not cause)'
                 f'</div></div>', unsafe_allow_html=True)
+
+
+def company_codes() -> list[str]:
+    an = load_analytics()
+    return an["companies"] if an else sorted(COMPANIES)

@@ -74,6 +74,17 @@ def peers_of(code: str) -> list[str]:
 
 SECTION_NAMES = {"LETTER": "Chairman/CEO letter", "MDA": "MD&A"}
 
+# ---- app copy and presets (config/app.yaml)
+APP = _yaml(CONFIG_DIR / "app.yaml")
+PIPELINE_STEPS = APP.get("pipeline", [])
+COMPARE_PRESETS = APP.get("compare_presets", [])
+ASK_EXAMPLES = APP.get("ask_examples", [])
+NARRATIVES_JSON = DATA / "processed" / "narratives.json"
+ASK_EXAMPLES_JSON = DATA / "processed" / "ask_examples.json"
+AUDIT_JSON = DATA / "processed" / "audit.json"
+EVIDENCE_MIN_CONFIDENCE = 0.45   # passages below this are never shown as evidence
+RELIABILITY_F1 = 0.60            # below this per-company F1 the Company page shows a caution
+
 # Plain names for the systems in metrics.json (technique in brackets).
 SYSTEM_NAMES = {
     "TF-IDF + LR (masked)": "Word-weight classifier (TF-IDF)",

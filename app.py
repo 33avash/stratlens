@@ -6,34 +6,23 @@ st.set_page_config(page_title="StratLens", layout="wide", initial_sidebar_state=
 from stratlens import theme, ui  # noqa: E402  (after set_page_config)
 
 ui.inject_css()
+ui.apply_theme_switch()
 
 pages = {
-    "Analysis": [
-        st.Page("views/benchmark.py", title="Overview", icon=":material/space_dashboard:", default=True),
-        st.Page("views/reports.py", title="Briefs", icon=":material/description:", url_path="briefs"),
+    "Analyse": [
+        st.Page("views/home.py", title="Home", icon=":material/home:", default=True),
+        st.Page("views/company.py", title="Company", icon=":material/apartment:", url_path="company"),
+        st.Page("views/compare.py", title="Compare", icon=":material/compare_arrows:", url_path="compare"),
         st.Page("views/ask.py", title="Ask", icon=":material/forum:", url_path="ask"),
     ],
     "Data": [
-        st.Page("views/analyse.py", title="Upload", icon=":material/upload_file:", url_path="upload"),
+        st.Page("views/add_report.py", title="Add a report", icon=":material/upload_file:", url_path="add-report"),
     ],
     "Model": [
         st.Page("views/how_it_works.py", title="How it works", icon=":material/account_tree:", url_path="how-it-works"),
-        st.Page("views/audit.py", title="Evaluation", icon=":material/monitoring:", url_path="evaluation"),
-        st.Page("views/model_card.py", title="Model card", icon=":material/badge:", url_path="model-card"),
     ],
 }
 
 logo = "logo_dark.svg" if theme.is_dark() else "logo.svg"
 st.logo(str(ui.ROOT / "assets" / logo), size="large")
-nav = st.navigation(pages, position="sidebar")
-
-with st.sidebar:
-    ui.theme_toggle()
-
-metrics = ui.load_metrics()
-if metrics:
-    with st.sidebar:
-        st.markdown(f'<div class="sl-sbfoot">NLP theme classifier · 7 themes<br>data · {metrics["generated"]}</div>',
-                    unsafe_allow_html=True)
-
-nav.run()
+st.navigation(pages, position="sidebar").run()

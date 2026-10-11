@@ -10,8 +10,8 @@ Hybrid ranking:
 Relevance gate: a passage can be returned only if its embedding cosine clears EMB_FLOOR, or it contains a
 two-word phrase from the question, or it contains most of the question's content words. If nothing clears the
 gate the caller refuses instead of answering.
-If the question names one company and no company filter is set, retrieval is limited to that company and the
-name is removed from the query, so passages are matched on topic rather than on the company name.
+If the question names companies and no company filter is set, retrieval is limited to those companies and the
+names are removed from the query, so passages are matched on topic rather than on the company name.
 Without the embedding model, ranking and the gate use BM25 and keyword matches only.
 """
 from __future__ import annotations
@@ -37,9 +37,13 @@ QUESTION_WORDS = {"how", "what", "why", "which", "who", "does", "did", "do", "sa
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
-def company_in_query(query: str) -> str | None:
+def companies_in_query(query: str) -> list[str]:
     q = query.lower()
-    hits = [c for c, names in COMPANY_ALIASES.items() if any(re.search(rf"\b{re.escape(n)}\b", q) for n in names)]
+    return [c for c, names in COMPANY_ALIASES.items() if any(re.search(rf"\b{re.escape(n)}\b", q) for n in names)]
+
+
+def company_in_query(query: str) -> str | None:
+    hits = companies_in_query(query)
     return hits[0] if len(hits) == 1 else None
 
 
@@ -85,15 +89,19 @@ def _ranks(scores: np.ndarray) -> np.ndarray:
 def search(passages: pd.DataFrame, query: str, k: int = 8, company: str | None = None,
            year: str | None = None) -> tuple[pd.DataFrame, str]:
     """Top-k relevant passages with `relevance` (0-1), `bm25_rank`, `emb_rank` and `emb_cosine`, plus a method note."""
-    note = ""
+    note, named = "", []
     if not company:
-        company = company_in_query(query)
-        if company:
-            note = f"; limited to {company} because the question names it"
+        named = companies_in_query(query)
+        if len(named) == 1:
+            company = named[0]
+        if named:
+            note = f"; limited to {' and '.join(named)} because the question names {'it' if len(named) == 1 else 'them'}"
     topic = re.sub(r"\s+", " ", COMPANY_RE.sub(" ", query)).strip() or query
     df = passages
     if company:
         df = df[df.company == company]
+    elif len(named) > 1:
+        df = df[df.company.isin(named)]
     if year:
         df = df[df.year == year]
     q_uni, q_bi = terms(topic, query=True)

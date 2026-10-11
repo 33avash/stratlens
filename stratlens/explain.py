@@ -62,3 +62,22 @@ def highlight_spans(text: str, terms: list[str]) -> list[tuple[int, int]]:
             if not any(s < m.end() and m.start() < e for s, e in spans):
                 spans.append((m.start(), m.end()))
     return sorted(spans)
+
+
+def why_terms(model: Pipeline, texts, k: int = 3) -> list[list[str]]:
+    """Per text: the k terms that push hardest toward its predicted theme (tf-idf weight x class coefficient),
+    excluding masking placeholders such as __brand__ (they carry no readable meaning)."""
+    vec, clf = _parts(model)
+    pre = model.named_steps.get("mask")
+    texts = list(texts)
+    X = vec.transform(pre.transform(texts) if pre is not None else texts).tocsr()
+    pred = clf.predict_proba(X).argmax(axis=1)
+    vocab = vec.get_feature_names_out()
+    out = []
+    for i in range(X.shape[0]):
+        row = X.getrow(i)
+        contrib = row.data * clf.coef_[pred[i], row.indices]
+        order = np.argsort(contrib)[::-1]
+        terms = [str(vocab[row.indices[j]]) for j in order if contrib[j] > 0 and "__" not in vocab[row.indices[j]]]
+        out.append(terms[:k])
+    return out

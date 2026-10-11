@@ -1,0 +1,132 @@
+{
+ "How is Dabur talking about quick commerce?": {
+  "passage_ids": [
+   "DABUR_FY2025_MDA_p147_236",
+   "DABUR_FY2026_LETTER_p30_021",
+   "DABUR_FY2026_MDA_p196_289",
+   "DABUR_FY2025_MDA_p132_043",
+   "DABUR_FY2026_MDA_p176_042",
+   "DABUR_FY2025_LETTER_p20_010",
+   "DABUR_FY2025_MDA_p147_235",
+   "DABUR_FY2026_MDA_p196_288"
+  ],
+  "method": "hybrid: BM25 + embeddings, rank fusion; limited to DABUR because the question names it",
+  "relevance": [
+   0.984,
+   0.984,
+   0.984,
+   0.939,
+   0.925,
+   0.924,
+   0.891,
+   0.872
+  ],
+  "status": "error",
+  "text": "The AI service is rate-limiting requests. Wait a minute and try again.",
+  "unsupported": []
+ },
+ "Which company talks most about rural expansion?": {
+  "passage_ids": [
+   "NESTLE_FY2025_MDA_p217_135",
+   "NESTLE_FY2026_LETTER_p8_032",
+   "MARICO_FY2026_MDA_p134_179",
+   "NESTLE_FY2026_MDA_p35_066",
+   "GODREJ_FY2026_MDA_p98_316",
+   "GODREJ_FY2026_MDA_p98_315",
+   "GODREJ_FY2025_MDA_p114_350",
+   "DABUR_FY2025_MDA_p147_233"
+  ],
+  "method": "hybrid: BM25 + embeddings, rank fusion",
+  "relevance": [
+   0.976,
+   0.946,
+   0.932,
+   0.924,
+   0.874,
+   0.871,
+   0.87,
+   0.853
+  ],
+  "status": "error",
+  "text": "The AI service is rate-limiting requests. Wait a minute and try again.",
+  "unsupported": []
+ },
+ "What sustainability targets did HUL set?": {
+  "passage_ids": [
+   "HUL_FY2025_LETTER_p25_014",
+   "HUL_FY2025_MDA_p115_177",
+   "HUL_FY2026_LETTER_p10_040",
+   "HUL_FY2025_MDA_p117_206",
+   "HUL_FY2025_MDA_p117_223",
+   "HUL_FY2025_MDA_p112_123",
+   "HUL_FY2025_LETTER_p25_021",
+   "HUL_FY2026_MDA_p46_144"
+  ],
+  "method": "hybrid: BM25 + embeddings, rank fusion; limited to HUL because the question names it",
+  "relevance": [
+   0.961,
+   0.961,
+   0.905,
+   0.883,
+   0.872,
+   0.867,
+   0.863,
+   0.858
+  ],
+  "status": "error",
+  "text": "The AI service is rate-limiting requests. Wait a minute and try again.",
+  "unsupported": []
+ },
+ "What did Nestlé say about pricing and inflation?": {
+  "passage_ids": [
+   "NESTLE_FY2026_MDA_p36_078",
+   "NESTLE_FY2026_MDA_p36_085",
+   "NESTLE_FY2026_MDA_p36_081",
+   "NESTLE_FY2026_MDA_p42_108",
+   "NESTLE_FY2025_MDA_p68_104",
+   "NESTLE_FY2026_MDA_p36_091",
+   "NESTLE_FY2025_MDA_p69_108",
+   "NESTLE_FY2025_LETTER_p31_013"
+  ],
+  "method": "hybrid: BM25 + embeddings, rank fusion; limited to NESTLE because the question names it",
+  "relevance": [
+   1.0,
+   0.976,
+   0.947,
+   0.911,
+   0.885,
+   0.853,
+   0.836,
+   0.815
+  ],
+  "status": "error",
+  "text": "The AI service is rate-limiting requests. Wait a minute and try again.",
+  "unsupported": []
+ },
+ "How do Marico and Dabur differ on digital?": {
+  "passage_ids": [
+   "MARICO_FY2026_LETTER_p32_079",
+   "MARICO_FY2026_LETTER_p28_010",
+   "MARICO_FY2025_MDA_p101_148",
+   "DABUR_FY2026_LETTER_p30_023",
+   "MARICO_FY2025_MDA_p103_217",
+   "MARICO_FY2025_LETTER_p12_063",
+   "DABUR_FY2025_MDA_p146_230",
+   "MARICO_FY2026_MDA_p135_208"
+  ],
+  "method": "hybrid: BM25 + embeddings, rank fusion; limited to DABUR and MARICO because the question names them",
+  "relevance": [
+   0.992,
+   0.992,
+   0.939,
+   0.904,
+   0.866,
+   0.858,
+   0.82,
+   0.503
+  ],
+  "status": "error",
+  "text": "The AI service is rate-limiting requests. Wait a minute and try again.",
+  "unsupported": []
+ }
+}
